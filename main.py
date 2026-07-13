@@ -1,25 +1,26 @@
 import json
-import os
+import streamlit as st
 
+# دالة تحميل البيانات
 def load_knowledge():
-    # تحميل قاعدة المعرفة من الملف الخارجي
-    with open('data/knowledge.json', 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open('data/knowledge.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"error": "ملف البيانات غير موجود"}
 
-def get_logic_response(user_input):
-    # تحميل البيانات ديناميكياً
+# واجهة المستخدم البسيطة
+st.title("🧠 SaeeD LogiC")
+user_input = st.text_input("اطرح سؤالك هنا:")
+
+if user_input:
     knowledge = load_knowledge()
+    response = "عذراً، لم أجد إجابة في قاعدة المعرفة."
     
-    # تحويل النص لـ lowercase للبحث
-    text = user_input.lower()
-    
-    # البحث عن نمط (Logic Match) داخل البيانات المستوردة
-    for key, response in knowledge.items():
-        if key in text:
-            return response
+    # البحث عن مفتاح مطابق
+    for key, val in knowledge.items():
+        if key in user_input.lower():
+            response = val
+            break
             
-    return "لا أملك قاعدة بيانات لهذا الاستفسار حالياً، هل تريد إضافته؟"
-
-# اختبار بسيط للتأكد من أن الكود يعمل
-if __name__ == "__main__":
-    print(get_logic_response("مرحبا"))
+    st.write("الرد:", response)
