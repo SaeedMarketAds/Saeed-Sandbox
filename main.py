@@ -1,27 +1,64 @@
+import os
 import streamlit as st
-from inference import InferenceEngine
+from engine.inference import InferenceEngine
+from engine.utils import ensure_directories
 
-st.set_page_config(page_title="SaeeD LogiC", page_icon="🧠")
-st.title("🧠 SaeeD LogiC")
-st.write("ذكاء اصطناعي محلي 100% — بدون API، بدون مفاتيح، بدون إنترنت")
+# التأكد من وجود المجلدات
+ensure_directories()
 
-if "engine" not in st.session_state:
+# تهيئة المحرك
+if 'engine' not in st.session_state:
     st.session_state.engine = InferenceEngine()
 
-if "history" not in st.session_state:
-    st.session_state.history = []
+# إعداد واجهة المستخدم
+st.set_page_config(
+    page_title="Saeed Logic - AI Assistant",
+    page_icon="🤖",
+    layout="centered"
+)
 
-user_input = st.text_input("اطرح سؤالك هنا:")
+# عنوان التطبيق
+st.title("🤖 Saeed Logic")
+st.markdown("**بدون مفاتيح، API ذكاء اصطناعي محلي 100% — بدون إنتزنت**")
+
+# إدخال السؤال
+user_input = st.text_input("اطرح سؤالك هنا:", placeholder="اكتب سؤالك...")
 
 if user_input:
-    answer = st.session_state.engine.answer(user_input)
-    st.session_state.history.append((user_input, answer))
+    with st.spinner("جاري التفكير..."):
+        # الحصول على الإجابة
+        answer = st.session_state.engine.answer(user_input)
+    
+    # عرض الإجابة
+    st.success("📝 الإجابة:")
+    st.write(answer)
+    
+    # عرض سجل المحادثة (اختياري)
+    with st.expander("📜 عرض سجل المحادثات"):
+        memory = st.session_state.engine.get_memory()
+        if memory:
+            for question, data in list(memory.items())[-5:]:  # آخر 5 محادثات
+                st.write(f"**س:** {question}")
+                st.write(f"**ج:** {data['response']}")
+                st.write(f"🕐 {data['timestamp']}")
+                st.divider()
+        else:
+            st.info("لا توجد محادثات مسجلة بعد")
 
-for q, a in reversed(st.session_state.history):
-    st.markdown(f"**أنت:** {q}")
-    st.markdown(f"**الرد:** {a}")
-    st.markdown("---")
+# زر لإضافة معرفة جديدة
+with st.expander("➕ إضافة معرفة جديدة"):
+    with st.form("add_knowledge_form"):
+        new_question = st.text_input("السؤال:")
+        new_answer = st.text_area("الإجابة:")
+        submit = st.form_submit_button("إضافة المعرفة")
+        
+        if submit and new_question and new_answer:
+            if st.session_state.engine.add_knowledge(new_question, new_answer):
+                st.success("✅ تم إضافة المعرفة بنجاح!")
+                st.rerun()
+            else:
+                st.error("❌ فشل في إضافة المعرفة")
 
-st.divider()
-st.caption("هذا النظام يتعلم بس من قاعدة المعرفة (data/knowledge.json). "
-           "كل ما أضفت أسئلة وأجوبة أكثر، صار أذكى وأدق — بدون أي اتصال خارجي.")
+# تذييل الصفحة
+st.markdown("---")
+st.caption("🚀 نظام ذكاء اصطناعي محلي يعمل بدون إنترنت")
