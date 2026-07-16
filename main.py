@@ -1,5 +1,5 @@
 import streamlit as st
-from .inference import InferenceEngine
+from inference import InferenceEngine
 
 st.set_page_config(page_title="SaeeD LogiC", page_icon="🧠")
 st.title("🧠 SaeeD LogiC")
