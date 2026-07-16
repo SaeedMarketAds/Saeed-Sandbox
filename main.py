@@ -12,7 +12,9 @@ if current_dir not in sys.path:
 from inference import InferenceEngine
 
 # استيراد الدالة ensure_dir من ملف utils.py المتواجد في المجلد الرئيسي
-from utils import ensure_dir
+# بدلاً من utils القديمة
+from app_utils import ensure_dir
+
 
 
 # التأكد من وجود المجلدات
