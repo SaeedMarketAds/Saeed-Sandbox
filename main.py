@@ -1,28 +1,18 @@
-import os
-import sys
+
 import streamlit as st
-
-# إضافة المجلد الحالي إلى مسار البحث
-current_dir = os.path.dirname(os.path.abspath(__file__))
-if current_dir not in sys.path:
-    sys.path.insert(0, current_dir)
-
-# استيراد من engine
-# استيراد الكلاس InferenceEngine من ملف inference.py المتواجد في المجلد الرئيسي
+import os
 from inference import InferenceEngine
 
-# استيراد الدالة ensure_dir من ملف utils.py المتواجد في المجلد الرئيسي
-# بدلاً من utils القديمة
-from app_utils import ensure_dir
+# 1. تعريف الدالة محلياً لتجنب خطأ NameError تماماً
+def ensure_directories():
+    """التأكد من إنشاء مجلدات البيانات والذاكرة تلقائياً"""
+    os.makedirs("data", exist_ok=True)
+    os.makedirs("memory", exist_ok=True)
 
-
-
-# التأكد من وجود المجلدات
+# 2. استدعاء الدالة لتهيئة المجلدات (السطر 21)
 ensure_directories()
 
-# تهيئة المحرك
-if 'engine' not in st.session_state:
-    st.session_state.engine = InferenceEngine()
+# 3. تكميل بقية كود التطبيق...
 
 # إعداد واجهة المستخدم
 st.set_page_config(
