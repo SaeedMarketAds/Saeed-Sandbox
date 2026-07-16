@@ -1,68 +1,58 @@
-
 import streamlit as st
 import os
-from inference import InferenceEngine
 
-# 1. تعريف الدالة محلياً لتجنب خطأ NameError تماماً
-def ensure_directories():
-    """التأكد من إنشاء مجلدات البيانات والذاكرة تلقائياً"""
-    os.makedirs("data", exist_ok=True)
-    os.makedirs("memory", exist_ok=True)
+# 1. إنشاء المجلدات مباشرة (بدون دالة لتفادي أي خطأ NameError نهائياً)
+os.makedirs("data", exist_ok=True)
+os.makedirs("memory", exist_ok=True)
 
-# 2. استدعاء الدالة لتهيئة المجلدات (السطر 21)
-ensure_directories()
+# 2. محاولة استيراد محرك الذكاء الاصطناعي
+try:
+    from inference import InferenceEngine
+except ImportError as e:
+    st.error(f"🚨 خطأ في استيراد ملف التشغيل: {e}")
+    st.info("تأكد من وجود الملفات باسم app_utils.py و inference.py في حسابك.")
+    st.stop()
 
-# 3. تكميل بقية كود التطبيق...
+# تهيئة واجهة التطبيق
+st.set_page_config(page_title="Saeed Sandbox", page_icon="🤖", layout="centered")
 
-# إعداد واجهة المستخدم
-st.set_page_config(
-    page_title="Saeed Logic - AI Assistant",
-    page_icon="🤖",
-    layout="centered"
-)
+st.title("🤖 سعيد سانـدبوكس | SaeeD SanDboX")
+st.write("---")
 
-# عنوان التطبيق
-st.title("🤖 Saeed Logic")
-st.markdown("**بدون مفاتيح، API ذكاء اصطناعي محلي 100% — بدون إنتزنت**")
+# تشغيل محرك الذكاء الاصطناعي وحفظه في الذاكرة المؤقتة
+@st.cache_resource
+def load_engine():
+    try:
+        return InferenceEngine()
+    except Exception as e:
+        st.error(f"❌ حدث خطأ أثناء تشغيل محرك الذكاء الاصطناعي: {e}")
+        return None
 
-# إدخال السؤال
-user_input = st.text_input("اطرح سؤالك هنا:", placeholder="اكتب سؤالك...")
+engine = load_engine()
 
-if user_input:
-    with st.spinner("جاري التفكير..."):
-        # الحصول على الإجابة
-        answer = st.session_state.engine.answer(user_input)
-    
-    # عرض الإجابة
-    st.success("📝 الإجابة:")
-    st.write(answer)
-    
-    # عرض سجل المحادثة (اختياري)
-    with st.expander("📜 عرض سجل المحادثات"):
-        memory = st.session_state.engine.get_memory()
-        if memory:
-            for question, data in list(memory.items())[-5:]:  # آخر 5 محادثات
-                st.write(f"**س:** {question}")
-                st.write(f"**ج:** {data['response']}")
-                st.write(f"🕐 {data['timestamp']}")
-                st.divider()
-        else:
-            st.info("لا توجد محادثات مسجلة بعد")
+if engine is not None:
+    # تهيئة سجل المحادثات
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-# زر لإضافة معرفة جديدة
-with st.expander("➕ إضافة معرفة جديدة"):
-    with st.form("add_knowledge_form"):
-        new_question = st.text_input("السؤال:")
-        new_answer = st.text_area("الإجابة:")
-        submit = st.form_submit_button("إضافة المعرفة")
+    # عرض الرسائل السابقة للمستخدم
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # استقبال سؤال المستخدم الجديد
+    user_input = st.chat_input("اكتب سؤالك هنا...")
+
+    if user_input:
+        with st.chat_message("user"):
+            st.markdown(user_input)
+        st.session_state.messages.append({"role": "user", "content": user_input})
         
-        if submit and new_question and new_answer:
-            if st.session_state.engine.add_knowledge(new_question, new_answer):
-                st.success("✅ تم إضافة المعرفة بنجاح!")
-                st.rerun()
-            else:
-                st.error("❌ فشل في إضافة المعرفة")
-
-# تذييل الصفحة
-st.markdown("---")
-st.caption("🚀 نظام ذكاء اصطناعي محلي يعمل بدون إنترنت")
+        with st.spinner("جاري التفكير... ⏳"):
+            response = engine.answer(user_input)
+            
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+else:
+    st.warning("⚠️ يرجى إصلاح الأخطاء المذكورة أعلاه ليتمكن المحرك من العمل.")
