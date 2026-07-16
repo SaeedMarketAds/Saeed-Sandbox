@@ -4,9 +4,7 @@ import json
 def ensure_dir(path):
     """
     التأكد من وجود المجلد وإنشائه تلقائياً إذا لم يكن موجوداً.
-    تتعامل الدالة بذكاء مع مسارات الملفات (مثل data/knowledge.json) أو مسارات المجلدات مباشرة.
     """
-    # إذا كان المسار يحتوي على ملف (ينتهي بنقطة وامتداد)، نأخذ مجلده الأب فقط
     if '.' in os.path.basename(path):
         path = os.path.dirname(path)
     
@@ -14,7 +12,7 @@ def ensure_dir(path):
         os.makedirs(path, exist_ok=True)
 
 def save_json(file_path, data):
-    """حفظ البيانات في ملف JSON مع التأكد من وجود المجلد تلقائياً"""
+    """حفظ البيانات في ملف JSON"""
     ensure_dir(file_path)
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -25,7 +23,7 @@ def save_json(file_path, data):
         return False
 
 def load_json(file_path):
-    """تحميل البيانات من ملف JSON والتأكد من إنشاء المجلد والملف إن لم يوجدا"""
+    """تحميل البيانات من ملف JSON"""
     ensure_dir(file_path)
     if not os.path.exists(file_path):
         return {}
