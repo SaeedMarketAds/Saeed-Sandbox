@@ -1,18 +1,18 @@
 import streamlit as st
 import os
 
-# 1. تهيئة المجلدات تلقائياً في الخلفية لمنع أي أخطاء مسارات
+# 1. تهيئة المجلدات تلقائياً في الخلفية
 os.makedirs("data", exist_ok=True)
 os.makedirs("memory", exist_ok=True)
 
-# 2. استيراد محرك الذكاء الاصطناعي مع معالجة الأخطاء
+# 2. استيراد محرك الذكاء الاصطناعي مع معالجة أخطاء الاستيراد
 try:
     from inference import InferenceEngine
 except ImportError as e:
     st.error(f"🚨 خطأ في استيراد ملف التشغيل (inference.py): {e}")
     st.stop()
 
-# 3. تهيئة المحرك داخل ذاكرة الجلسة (session_state) لمنع خطأ AttributeError تماماً
+# 3. تهيئة المحرك داخل ذاكرة الجلسة بأمان
 if "engine" not in st.session_state:
     try:
         st.session_state.engine = InferenceEngine()
@@ -20,40 +20,53 @@ if "engine" not in st.session_state:
         st.error(f"❌ فشل تشغيل محرك الذكاء الاصطناعي: {e}")
         st.stop()
 
-# 4. تصميم واجهة التطبيق (متطابقة تماماً مع صورك الجميلة)
-st.title("😀 Saeed Logic")
-st.markdown("<h3 style='text-align: right;'>ذكاء اصطناعي محلي 100% — بدون API، بدون مفاتيح إنترنت</h3>", unsafe_html=True)
+# 4. إعداد الصفحة بالاسم الجديد المعتمد
+st.set_page_config(page_title="Saeed Logic", page_icon="☺", layout="centered")
+
+# تصميم الواجهة العلوية متطابقة مع رغبتك
+st.markdown("<h1 style='text-align: right;'>☺ Saeed Logic</h1>", unsafe_html=True)
+st.markdown("<h4 style='text-align: right; color: #888;'>ذكاء اصطناعي محلي 100% — بدون API، بدون مفاتيح إنترنت</h4>", unsafe_html=True)
 st.write("---")
 
-# استقبال سؤال المستخدم عبر الحقل النصي
-user_input = st.text_input("اطرح سؤالك هنا:", key="user_question_input")
+# استقبال سؤال المستخدم
+user_input = st.text_input("اطرح سؤالك هنا:", placeholder="اكتب سؤالك هنا...", key="user_question")
 
 if user_input:
     with st.spinner("جاري التفكير وتحليل الإجابة... ⏳"):
         try:
-            # استدعاء الإجابة من المحرك المخزن بأمان داخل session_state
-            response = st.session_state.engine.answer(user_input)
-            
-            # عرض الإجابة في صندوق أخضر جميل ومريح للعين
-            st.success(response)
+            # التحقق الوقائي من وجود دالة الاستجابة لتجنب الانهيار
+            if hasattr(st.session_state.engine, "answer"):
+                response = st.session_state.engine.answer(user_input)
+                st.success(response)
+            else:
+                st.error("❌ خطأ برمجي: دالة الاستجابة (answer) غير معرّفة بالشكل الصحيح داخل ملف inference.py")
+        except AttributeError as ae:
+            st.error(f"⚠️ تنبيه خصائص (AttributeError): {ae}")
+            st.info("يوجد نقص أو خطأ إملائي في تعريف المتغيرات البرمجية داخل ملف inference.py الخاص بك.")
         except Exception as e:
-            st.error(f"❌ حدث خطأ أثناء معالجة السؤال: {e}")
+            st.error(f"❌ حدث خطأ غير متوقع: {e}")
 
 st.write("---")
 
 # 5. صندوق إضافة المعرفة (Expander) المتوافق مع واجهتك
 with st.expander("➕ إضافة معرفة جديدة"):
-    new_q = st.text_input("السؤال الجديد:")
-    new_a = st.text_area("الإجابة المقترحة له:")
+    new_q = st.text_input("السؤال الجديد:", key="new_q")
+    new_a = st.text_area("الإجابة المقترحة له:", key="new_a")
     
-    if st.button("حفظ في الذاكرة 💾"):
+    if st.button("حفظ في الذاكرة 💾", key="save_btn"):
         if new_q and new_a:
-            success = st.session_state.engine.add_knowledge(new_q, new_a)
-            if success:
-                st.success("✅ تم حفظ المعلومة بنجاح في قاعدة بياناتك المحلية!")
-                st.balloons() # تأثير بالونات احتفالي خفيف عند الحفظ بنجاح 🎉
-            else:
-                st.error("❌ حدث خطأ أثناء الحفظ، يرجى المحاولة مجدداً.")
+            try:
+                if hasattr(st.session_state.engine, "add_knowledge"):
+                    success = st.session_state.engine.add_knowledge(new_q, new_a)
+                    if success:
+                        st.success("✅ تم حفظ المعلومة بنجاح في قاعدة بياناتك المحلية!")
+                        st.balloons()
+                    else:
+                        st.error("❌ حدث خطأ أثناء الحفظ، يرجى المحاولة مجدداً.")
+                else:
+                    st.error("❌ خطأ برمجي: دالة إضافة المعرفة (add_knowledge) غير موجودة في ملف inference.py")
+            except Exception as e:
+                st.error(f"❌ حدث خطأ أثناء محاولة الحفظ: {e}")
         else:
             st.warning("⚠️ يرجى كتابة السؤال والإجابة أولاً قبل الضغط على حفظ.")
 
