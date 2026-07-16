@@ -1,7 +1,14 @@
 import os
+import sys
 import streamlit as st
-from engine.inference import InferenceEngine
-from engine.utils import ensure_directories
+
+# إضافة المجلد الحالي إلى مسار البحث
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# استيراد من engine
+from engine import InferenceEngine, ensure_directories
 
 # التأكد من وجود المجلدات
 ensure_directories()
