@@ -1,6 +1,8 @@
 import os
 import json
-from .utils import save_json, load_json
+ # بدلاً من الاستيراد القديم
+from app_utils import save_json, load_json
+
 
 class InferenceEngine:
     def __init__(self):
