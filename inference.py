@@ -3,7 +3,7 @@ import re
 from utils import load_json, save_json, clean_text
 
 KNOWLEDGE_PATH = "data/knowledge.json"
-MEMORY_PATH = "conversation.json"
+MEMORY_PATH = "/tmp/conversation.json"
 
 # حد التشابه المقبول (0 إلى 1). كل ما زاد، صارت المطابقة أدق وأصعب.
 SIMILARITY_THRESHOLD = 0.55
@@ -33,7 +33,7 @@ class InferenceEngine:
     """
 
     def __init__(self):
-        self.knowledge = load_json(KNOWLEDGE_PATH)
+        self.knowledge = load_json(KNOWLEDGE_PATH)MEMORY_PATH = "/tmp/conversation.json"
         self.memory = load_json(MEMORY_PATH)
         self._normalized_keys = {
             normalize_arabic(k): k for k in self.knowledge.keys()
