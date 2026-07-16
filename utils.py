@@ -1,27 +1,37 @@
 import os
 import json
 
-def save_json(path, data):
+def ensure_dir(path):
+    """
+    التأكد من وجود المجلد وإنشائه تلقائياً إذا لم يكن موجوداً.
+    تتعامل الدالة بذكاء مع مسارات الملفات (مثل data/knowledge.json) أو مسارات المجلدات مباشرة.
+    """
+    # إذا كان المسار يحتوي على ملف (ينتهي بنقطة وامتداد)، نأخذ مجلده الأب فقط
+    if '.' in os.path.basename(path):
+        path = os.path.dirname(path)
+    
+    if path and not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+
+def save_json(file_path, data):
+    """حفظ البيانات في ملف JSON مع التأكد من وجود المجلد تلقائياً"""
+    ensure_dir(file_path)
     try:
-        dir_path = os.path.dirname(path)
-        if dir_path and not os.path.exists(dir_path):
-            os.makedirs(dir_path, exist_ok=True)
-        
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         return True
     except Exception as e:
-        print(f"خطأ: {e}")
+        print(f"Error saving JSON: {e}")
         return False
 
-def load_json(path):
+def load_json(file_path):
+    """تحميل البيانات من ملف JSON والتأكد من إنشاء المجلد والملف إن لم يوجدا"""
+    ensure_dir(file_path)
+    if not os.path.exists(file_path):
+        return {}
     try:
-        if os.path.exists(path):
-            with open(path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        else:
-            save_json(path, {})
-            return {}
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
     except Exception as e:
-        print(f"خطأ: {e}")
+        print(f"Error loading JSON: {e}")
         return {}
