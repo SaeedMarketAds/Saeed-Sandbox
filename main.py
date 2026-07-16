@@ -20,12 +20,12 @@ if "engine" not in st.session_state:
         st.error(f"❌ فشل تشغيل محرك الذكاء الاصطناعي: {e}")
         st.stop()
 
-# 4. إعداد الصفحة بالاسم الجديد المعتمد
-st.set_page_config(page_title="Saeed Logic", page_icon="☺", layout="centered")
+# 4. إعداد الصفحة بالاسم الجديد المعتمد والوجه الضاحك الفخم 😀
+st.set_page_config(page_title="Saeed Logic", page_icon="😀", layout="centered")
 
-# تصميم الواجهة العلوية متطابقة مع رغبتك
-st.markdown("<h1 style='text-align: right;'>☺ Saeed Logic</h1>", unsafe_html=True)
-st.markdown("<h4 style='text-align: right; color: #888;'>ذكاء اصطناعي محلي 100% — بدون API، بدون مفاتيح إنترنت</h4>", unsafe_html=True)
+# تصميم الواجهة العلوية (تم تصحيح الأكواد هنا)
+st.markdown("<h1 style='text-align: right;'>😀 Saeed Logic</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: right; color: #888;'>ذكاء اصطناعي محلي 100% — بدون API، بدون مفاتيح إنترنت</h4>", unsafe_allow_html=True)
 st.write("---")
 
 # استقبال سؤال المستخدم
@@ -71,4 +71,4 @@ with st.expander("➕ إضافة معرفة جديدة"):
             st.warning("⚠️ يرجى كتابة السؤال والإجابة أولاً قبل الضغط على حفظ.")
 
 st.write("---")
-st.markdown("<p style='text-align: center; color: #888;'>🚀 نظام ذكاء اصطناعي محلي يعمل بدون إنترنت</p>", unsafe_html=True)
+st.markdown("<p style='text-align: center; color: #888;'>🚀 نظام ذكاء اصطناعي محلي يعمل بدون إنترنت</p>", unsafe_allow_html=True)
