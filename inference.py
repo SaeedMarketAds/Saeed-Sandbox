@@ -1,9 +1,9 @@
 import difflib
 import re
-from engine.utils import load_json, save_json, clean_text
+from utils import load_json, save_json, clean_text
 
 KNOWLEDGE_PATH = "data/knowledge.json"
-MEMORY_PATH = "memory/conversation.json"
+MEMORY_PATH = "conversation.json"
 
 # حد التشابه المقبول (0 إلى 1). كل ما زاد، صارت المطابقة أدق وأصعب.
 SIMILARITY_THRESHOLD = 0.55
