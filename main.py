@@ -1,4 +1,4 @@
-hereimport streamlit as st
+import streamlit as st
 from engine.inference import InferenceEngine
 
 st.set_page_config(page_title="SaeeD LogiC", page_icon="🧠")
