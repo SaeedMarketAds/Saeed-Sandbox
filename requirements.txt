@@ -2,5 +2,6 @@ google-generativeai
 streamlit==1.28.0
 python-telegram-bot
 requests
-Pillow>=10.0.0
-Pillow
+Pillow>=10.2.0
+
+
