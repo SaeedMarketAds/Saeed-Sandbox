@@ -96,7 +96,7 @@ with st.expander("🔐 لوحة التحكم وإضافة المعرفة (خاص
     admin_password = st.text_input("أدخل الرقم السري للوصول لخيارات التدريب:", type="password", key="admin_pwd")
     
     # تأكيد الرقم السري (يمكنك تغيير "1234" إلى أي رقم تريده)
-    if admin_password == "1234":
+    if admin_password == "ALISAEEDDTCOM-8*LogeC":
         st.success("🔓 أهلاً بك يا سعيد، تم التحقق بنجاح. يمكنك التعديل الآن:")
         
         new_q = st.text_input("السؤال الجديد:", key="new_q")
