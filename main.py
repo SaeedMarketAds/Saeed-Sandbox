@@ -82,27 +82,42 @@ st.write("---")
 # ====================================================
 # القسم 5: صندوق إضافة وتحديث المعرفة (خاص بالإدارة)
 # ====================================================
+# ====================================================
+# القسم 5: صندوق إضافة وتحديث المعرفة (محمي برقم سري خاص بسعيد)
+# ====================================================
 
-with st.expander("➕ إضافة معرفة جديدة"):
-    new_q = st.text_input("السؤال الجديد:", key="new_q")
-    new_a = st.text_area("الإجابة المقترحة له:", key="new_a")
+with st.expander("🔐 لوحة التحكم وإضافة المعرفة (خاص بالإدارة)"):
+    # خانة لإدخال الرقم السري (تظهر النجوم بدلاً من الأرقام لحماية السرية)
+    admin_password = st.text_input("أدخل الرقم السري للوصول لخيارات التدريب:", type="password", key="admin_pwd")
     
-    if st.button("حفظ في الذاكرة 💾", key="save_btn"):
-        if new_q and new_a:
-            try:
-                if hasattr(st.session_state.engine, "add_knowledge"):
-                    success = st.session_state.engine.add_knowledge(new_q, new_a)
-                    if success:
-                        st.success("✅ تم حفظ المعلومة بنجاح في قاعدة بياناتك المحلية!")
-                        st.balloons()
+    # تأكيد الرقم السري (يمكنك تغيير "1234" إلى أي رقم تريده)
+    if admin_password == "1234":
+        st.success("🔓 أهلاً بك يا سعيد، تم التحقق بنجاح. يمكنك التعديل الآن:")
+        
+        new_q = st.text_input("السؤال الجديد:", key="new_q")
+        new_a = st.text_area("الإجابة المقترحة له:", key="new_a")
+        
+        if st.button("حفظ في الذاكرة 💾", key="save_btn"):
+            if new_q and new_a:
+                try:
+                    if hasattr(st.session_state.engine, "add_knowledge"):
+                        success = st.session_state.engine.add_knowledge(new_q, new_a)
+                        if success:
+                            st.success("✅ تم حفظ المعلومة بنجاح في قاعدة بياناتك المحلية!")
+                            st.balloons()
+                        else:
+                            st.error("❌ حدث خطأ أثناء الحفظ، يرجى المحاولة مجدداً.")
                     else:
-                        st.error("❌ حدث خطأ أثناء الحفظ، يرجى المحاولة مجدداً.")
-                else:
-                    st.error("❌ خطأ برمجي: دالة إضافة المعرفة (add_knowledge) غير موجودة في ملف inference.py")
-            except Exception as e:
-                st.error(f"❌ حدث خطأ أثناء محاولة الحفظ: {e}")
-        else:
-            st.warning("⚠️ يرجى كتابة السؤال والإجابة أولاً قبل الضغط على حفظ.")
+                        st.error("❌ خطأ برمجي: دالة إضافة المعرفة (add_knowledge) غير موجودة في ملف inference.py")
+                except Exception as e:
+                    st.error(f"❌ حدث خطأ أثناء محاولة الحفظ: {e}")
+            else:
+                st.warning("⚠️ يرجى كتابة السؤال والإجابة أولاً قبل الضغط على حفظ.")
+    
+    elif admin_password:
+        st.error("❌ الرقم السري غير صحيح! لا يمكنك تعديل بيانات النظام.")
+
+
 
 
 # ====================================================
