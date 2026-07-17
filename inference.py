@@ -1,6 +1,6 @@
 import os
 import json
- # بدلاً من الاستيراد القديم
+# بدلاً من الاستيراد القديم
 from app_utils import save_json, load_json
 
 
@@ -19,14 +19,30 @@ class InferenceEngine:
     
     def answer(self, user_input):
         """
-        معالجة سؤال المستخدم وإرجاع الإجابة
+        معالجة سؤال المستخدم وإرجاع الإجابة بمطابقة مرنة وذكية
         """
         try:
-            # البحث في المعرفة
-            if user_input in self.knowledge:
-                response = self.knowledge[user_input]
+            # تنظيف مدخلات الزبون (إزالة علامات الاستفهام والمسافات الزائدة لتجنب الأخطاء)
+            cleaned_input = user_input.strip().replace("؟", "").replace("?", "")
+            
+            response = None
+            
+            # 1. البحث عن تطابق دقيق أولاً لضمان السرعة والدقة
+            if cleaned_input in self.knowledge:
+                response = self.knowledge[cleaned_input]
             else:
-                # إجابة افتراضية للأسئلة غير المعروفة
+                # 2. مطابقة مرنة: يبحث إذا كانت الكلمة المفتاحية المدربة موجودة داخل جملة الزبون
+                for key in self.knowledge:
+                    # تنظيف المفتاح المخزن أيضاً للمقارنة العادلة
+                    cleaned_key = key.strip().replace("؟", "").replace("?", "")
+                    
+                    # إذا كانت الكلمة المدربة (مثل: سعيد ماركت) جزءاً من سؤال الزبون (مثل: من هو سعيد ماركت؟)
+                    if cleaned_key in cleaned_input:
+                        response = self.knowledge[key]
+                        break # عثر على الإجابة، اخرج من الحلقة
+            
+            # 3. إذا لم يجد البوت أي تطابق دقيق أو جزئي في الذاكرة
+            if response is None:
                 response = "⚠️ عفواً، لا أملك معلومات عن هذا السؤال حالياً. يمكنك إضافة الإجابة في ملف المعرفة."
             
             # حفظ المحادثة في الذاكرة
