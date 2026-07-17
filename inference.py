@@ -19,29 +19,42 @@ class InferenceEngine:
     
     def answer(self, user_input):
         """
-        معالجة سؤال المستخدم وإرجاع الإجابة بمطابقة مرنة وذكية
+        معالجة سؤال المستخدم وإرجاع الإجابة بتصفية ذكية لكلمات السؤال
         """
         try:
-            # تنظيف مدخلات الزبون (إزالة علامات الاستفهام والمسافات الزائدة لتجنب الأخطاء)
+            # 1. تنظيف علامات الاستفهام والمسافات الزائدة
             cleaned_input = user_input.strip().replace("؟", "").replace("?", "")
             
+            # قائمة الكلمات والأدوات الشائعة لتجاهلها والوصول لجوهر السؤال
+            stop_words = ["من هو", "ماهو", "ما هو", "ما هي", "ماهي", "ايش هو", "ايش", "هو", "هي", "شو"]
+            
+            # دالة داخلية لتنظيف النص من كلمات السؤال الزائدة
+            def remove_question_words(text):
+                txt = text
+                for word in stop_words:
+                    txt = txt.replace(word, "")
+                return txt.strip()
+            
+            # استخراج الكلمة الأساسية من سؤال الزبون (مثال: "سعيد ماركت")
+            core_input = remove_question_words(cleaned_input)
             response = None
             
-            # 1. البحث عن تطابق دقيق أولاً لضمان السرعة والدقة
+            # 2. البحث عن تطابق دقيق أولاً
             if cleaned_input in self.knowledge:
                 response = self.knowledge[cleaned_input]
             else:
-                # 2. مطابقة مرنة: يبحث إذا كانت الكلمة المفتاحية المدربة موجودة داخل جملة الزبون
+                # 3. المطابقة الذكية عبر الكلمات الجوهرية
                 for key in self.knowledge:
-                    # تنظيف المفتاح المخزن أيضاً للمقارنة العادلة
                     cleaned_key = key.strip().replace("؟", "").replace("?", "")
+                    # استخراج الكلمة الأساسية من الجملة المدربة مخزناً
+                    core_key = remove_question_words(cleaned_key)
                     
-                    # إذا كانت الكلمة المدربة (مثل: سعيد ماركت) جزءاً من سؤال الزبون (مثل: من هو سعيد ماركت؟)
-                    if cleaned_key in cleaned_input:
+                    # التحقق من تشابه الجوهر (إذا كانت الكلمة الأساسية متطابقة)
+                    if core_key and (core_key in core_input or core_input in core_key):
                         response = self.knowledge[key]
-                        break # عثر على الإجابة، اخرج من الحلقة
+                        break
             
-            # 3. إذا لم يجد البوت أي تطابق دقيق أو جزئي في الذاكرة
+            # 4. إذا لم يجد البوت أي تطابق
             if response is None:
                 response = "⚠️ عفواً، لا أملك معلومات عن هذا السؤال حالياً. يمكنك إضافة الإجابة في ملف المعرفة."
             
