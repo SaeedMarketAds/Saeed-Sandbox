@@ -1,79 +1,51 @@
 import json
 import os
+import random
+from datetime import datetime
 
 class InferenceEngine:
-    def __init__(self):
-        # تحديد مسار ملف قاعدة البيانات المحلية داخل مجلد data
-        self.json_path = os.path.join("data", "knowledge.json")
-        self.knowledge_base = self.load_knowledge()
-        
-        # اسم ملف نموذج Gemma (بصيغة GGUF الخفيفة المخصصة للهواتف)
-        # يجب تحميل الملف ووضعه في نفس مجلد المشروع
-        self.model_path = "gemma-2-2b-it.Q4_K_M.gguf"
-        self.model = None
-        
-        # تهيئة وتجهيز النموذج محلياً
-        self.init_local_ai()
+    def __init__(self, knowledge_path="data/knowledge.json", history_path="conversation.json"):
+        self.knowledge_path = knowledge_path
+        self.history_path = history_path
+        self.knowledge = self.load_json(self.knowledge_path, default={})
+        self.history = self.load_json(self.history_path, default=[])
 
-    def load_knowledge(self):
-        """تحميل البيانات المحلية من ملف JSON بآمان"""
-        if os.path.exists(self.json_path):
-            try:
-                with open(self.json_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except:
-                return {}
-        return {}
+    def load_json(self, path, default):
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return default
 
-    def init_local_ai(self):
-        """تحميل نموذج الذكاء الاصطناعي Gemma محلياً باستخدام مكتبة llama-cpp"""
-        if os.path.exists(self.model_path):
-            try:
-                from llama_cpp import Llama
-                # تحميل النموذج وتخصيص 4 خيوط معالجة تناسب معالجات الهواتف المتطورة
-                self.model = Llama(
-                    model_path=self.model_path,
-                    n_ctx=2048,      # حجم سياق الذاكرة
-                    n_threads=4      # عدد الأنوية المستخدمة من المعالج
-                )
-            except ImportError:
-                print("تنبيه: مكتبة llama-cpp-python غير مثبتة بعد في بيئتك البرمجية.")
-        else:
-            print(f"تنبيه: ملف النموذج {self.model_path} غير موجود في المجلد الحالي.")
+    def save_json(self, path, data):
+        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else '.', exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
 
-    def answer(self, question):
-        """دالة الاستجابة الذكية الذكية (تبحث في JSON أولاً ثم تنتقل لـ Gemma)"""
-        question_clean = question.strip().lower()
+    def get_response(self, user_input):
+        user_input = user_input.lower().strip()
+        best_match = None
+        highest_score = 0
         
-        # 1. المرحلة الأولى: البحث الذكي السريع في ملف الـ JSON الخاص بك (لتوفير الوقت وموارد الهاتف)
-        for key, value in self.knowledge_base.items():
-            if key.lower() in question_clean or question_clean in key.lower():
-                return f"📢 الإجابة من قاعدة البيانات المحلية:\n\n{value}"
+        # تحسين آلية مطابقة المعرفة بناءً على تداخل الكلمات (Score)
+        for key, responses in self.knowledge.items():
+            key_lower = key.lower()
+            if key_lower in user_input:
+                score = len(key_lower)  # كلما كانت الكلمة المفتاحية أطول وأدق زاد وزنها
+                if score > highest_score:
+                    highest_score = score
+                    best_match = random.choice(responses)
         
-        # 2. المرحلة الثانية: إذا لم يجد إجابة مطابقة، يتدخل ذكاء غيما (Gemma) ليصيغ الرد
-        if self.model:
-            # بناء أمر برمي (Prompt) يوجه النموذج للرد بالعربية وبطريقة احترافية
-            prompt = f"<start_of_turn>user\nأنت مساعد ذكي مدمج في نظام Saeed Logic. أجب على السؤال التالي بلغة عربية سليمة وموجزة:\n{question}<end_of_turn>\n<start_of_turn>model\n"
-            try:
-                output = self.model(
-                    prompt, 
-                    max_tokens=200, 
-                    stop=["<end_of_turn>"], 
-                    echo=False
-                )
-                return output['choices'][0]['text'].strip()
-            except Exception as e:
-                return f"❌ حدث خطأ أثناء تشغيل معالجة الذكاء الاصطناعي: {e}"
+        response = best_match if best_match else "عذراً، لم أجد إجابة مطابقة في قاعدة المعرفة المحلية حالياً."
         
-        # خيار احتياطي في حال عدم تحميل الموديل وعدم وجود إجابة في الـ JSON
-        return "🤖 عذراً، لم أجد إجابة مطابقة في قاعدة البيانات المحلية، ولم يتم تفعيل محرك Gemma الذكي (تأكد من تحميل ملف الـ GGUF الخاص بالنموذج)."
+        # تسجيل المحادثة تلقائياً
+        self.log_conversation(user_input, response)
+        return response
 
-    def add_knowledge(self, question, answer):
-        """إضافة معرفة جديدة إلى ملف JSON وحفظها فوراً"""
-        self.knowledge_base[question] = answer
-        try:
-            with open(self.json_path, "w", encoding="utf-8") as f:
-                json.dump(self.knowledge_base, f, ensure_ascii=False, indent=4)
-            return True
-        except:
-            return False
+    def log_conversation(self, user_input, response):
+        chat_entry = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "user": user_input,
+            "bot": response
+        }
+        self.history.append(chat_entry)
+        self.save_json(self.history_path, self.history)
