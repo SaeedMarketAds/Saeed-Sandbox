@@ -1,0 +1,73 @@
+import streamlit as st
+import os
+
+# 1. تهيئة المجلدات تلقائياً في الخلفية
+os.makedirs("data", exist_ok=True)
+os.makedirs("memory", exist_ok=True)
+
+# 2. استيراد محرك الذكاء الاصطناعي مع معالجة أخطاء الاستيراد
+try:
+    from inference import InferenceEngine
+except ImportError as e:
+    st.error(f"🚨 خطأ في استيراد ملف التشغيل (inference.py): {e}")
+    st.stop()
+
+# 3. تهيئة المحرك داخل ذاكرة الجلسة بأمان
+if "engine" not in st.session_state:
+    try:
+        st.session_state.engine = InferenceEngine()
+    except Exception as e:
+        st.error(f"❌ فشل تشغيل محرك الذكاء الاصطناعي: {e}")
+        st.stop()
+
+# 4. إعداد الصفحة
+st.set_page_config(page_title="Saeed Logic", page_icon="😀", layout="centered")
+
+st.markdown("<h1 style='text-align: right;'>😀 Saeed Logic</h1>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: right; color: #888;'>ذكاء اصطناعي محلي 100% — يعمل عبر DeepSeek (Ollama) بدون إنترنت</h4>", unsafe_allow_html=True)
+st.write("---")
+
+# استقبال سؤال المستخدم
+user_input = st.text_input("اطرح سؤالك هنا:", placeholder="اكتب سؤالك هنا...", key="user_question")
+
+if user_input:
+    with st.spinner("جاري التفكير وتحليل الإجابة عبر DeepSeek... ⏳"):
+        try:
+            if hasattr(st.session_state.engine, "answer"):
+                response = st.session_state.engine.answer(user_input)
+                st.success(response)
+            else:
+                st.error("❌ خطأ برمجي: دالة الاستجابة (answer) غير معرّفة بالشكل الصحيح داخل ملف inference.py")
+        except AttributeError as ae:
+            st.error(f"⚠️ تنبيه خصائص (AttributeError): {ae}")
+            st.info("يوجد نقص أو خطأ إملائي في تعريف المتغيرات البرمجية داخل ملف inference.py الخاص بك.")
+        except Exception as e:
+            st.error(f"❌ حدث خطأ غير متوقع: {e}")
+
+st.write("---")
+
+# 5. صندوق إضافة المعرفة (تُستخدم كسياق يُغذّى لنموذج DeepSeek)
+with st.expander("➕ إضافة معرفة جديدة"):
+    new_q = st.text_input("السؤال الجديد:", key="new_q")
+    new_a = st.text_area("الإجابة المقترحة له:", key="new_a")
+
+    if st.button("حفظ في الذاكرة 💾", key="save_btn"):
+        if new_q and new_a:
+            try:
+                if hasattr(st.session_state.engine, "add_knowledge"):
+                    success = st.session_state.engine.add_knowledge(new_q, new_a)
+                    if success:
+                        st.success("✅ تم حفظ المعلومة بنجاح في قاعدة بياناتك المحلية!")
+                        st.balloons()
+                        st.rerun()
+                    else:
+                        st.error("❌ حدث خطأ أثناء الحفظ، يرجى المحاولة مجدداً.")
+                else:
+                    st.error("❌ خطأ برمجي: دالة إضافة المعرفة (add_knowledge) غير موجودة في ملف inference.py")
+            except Exception as e:
+                st.error(f"❌ حدث خطأ أثناء محاولة الحفظ: {e}")
+        else:
+            st.warning("⚠️ يرجى كتابة السؤال والإجابة أولاً قبل الضغط على حفظ.")
+
+st.write("---")
+st.markdown("<p style='text-align: center; color: #888;'>🚀 نظام ذكاء اصطناعي محلي يعمل عبر DeepSeek بدون إنترنت</p>", unsafe_allow_html=True)
