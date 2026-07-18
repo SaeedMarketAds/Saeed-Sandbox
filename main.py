@@ -2,25 +2,22 @@ import sys
 from inference import InferenceEngine
 
 def main():
-    print("="*50)
-    print("  Saeed Logic - نظام التحقق المحلي  ")
-    print("="*50)
-    
-    # طلب كلمة المرور (مؤقتاً للتجربة اجعلها 1234)
-    password = input("Enter Admin Password: ")
-    
-    if password != "1234":
-        print("\n[X] كلمة المرور غير صحيحة. تم رفض الوصول.")
-        sys.exit(0)
+    print("========================================")
+    print("  Saeed Logic - Local AI System  ")
+    print("========================================")
+    print("Type 'exit' or 'خروج' to quit.\n")
 
-    print("\n[✓] تم التحقق بنجاح! جاري تشغيل المحرك...\n")
-    engine = InferenceEngine()
+    try:
+        engine = InferenceEngine()
+    except Exception as e:
+        print(f"Error loading engine: {e}")
+        sys.exit(1)
 
     while True:
         try:
             user_input = input("You: ")
             if user_input.lower() in ['خروج', 'exit']:
-                print("تم إغلاق النظام.")
+                print("Closing Saeed Logic...")
                 break
                 
             if not user_input.strip():
@@ -29,8 +26,8 @@ def main():
             bot_response = engine.get_response(user_input)
             print(f"Saeed Logic: {bot_response}\n")
 
-        except KeyboardInterrupt:
-            print("\nتم إنهاء الجلسة.")
+        except (KeyboardInterrupt, EOFError):
+            print("\nSession ended.")
             sys.exit(0)
 
 if __name__ == "__main__":
