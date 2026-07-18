@@ -1,132 +1,54 @@
-import streamlit as st
-import os
+import sys
+import hashlib
+from inference import InferenceEngine
 
-# ====================================================
-# القسم 1: تهيئة المجلدات وإعدادات الصفحة الأساسية
-# ====================================================
+# كلمة المرور الافتراضية مشفرة بـ SHA-256 (مثال لكلمة مرور: "saeed2026")
+# يمكنك تغيير الهاش لاحقاً لحماية نظامك
+ADMIN_PASSWORD_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"
 
-# تهيئة المجلدات تلقائياً في الخلفية
-os.makedirs("data", exist_ok=True)
-os.makedirs("memory", exist_ok=True)
+def verify_admin():
+    print("="*50)
+    print("  مرحباً بك في Saeed Logic - نظام التحقق من الهوية  ")
+    print("="*50)
+    password = input("أدخل كلمة مرور المسؤول للدخول: ")
+    
+    # تشفير المدخلات ومقارنتها بالهاش المخزن
+    input_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+    if input_hash == ADMIN_PASSWORD_HASH:
+        print("\n[✓] تم التحقق بنجاح! جاري تشغيل المحرك المحلي...\n")
+        return True
+    else:
+        print("\n[✗] كلمة المرور غير صحيحة. تم رفض الوصول.")
+        return False
 
-# إعداد الصفحة بالاسم المعتمد والوجه الضاحك الفخم 😀
-st.set_page_config(page_title="Saeed Logic", page_icon="😀", layout="centered")
+def main():
+    # التحقق من الأمان أولاً
+    if not verify_admin():
+        sys.exit(0)
 
+    print("="*50)
+    print("  تطبيق Saeed Logic - الذكاء الاصطناعي نشط الآن  ")
+    print("="*50)
+    print("اكتب 'خروج' أو 'exit' لإنهاء الجلسة.\n")
 
-# ====================================================
-# القسم 2: استيراد محرك الذكاء الاصطناعي وتشغيله
-# ====================================================
+    engine = InferenceEngine()
 
-# استيراد محرك الذكاء الاصطناعي مع معالجة أخطاء الاستيراد
-try:
-    from inference import InferenceEngine
-except ImportError as e:
-    st.error(f"🚨 خطأ في استيراد ملف التشغيل (inference.py): {e}")
-    st.stop()
-
-# تهيئة المحرك داخل ذاكرة الجلسة بأمان
-if "engine" not in st.session_state:
-    try:
-        st.session_state.engine = InferenceEngine()
-    except Exception as e:
-        st.error(f"❌ فشل تشغيل محرك الذكاء الاصطناعي: {e}")
-        st.stop()
-
-
-# ====================================================
-# القسم 3: تصميم الواجهة العلوية وعرض الشخصية الرقمية (Avatar)
-# ====================================================
-
-st.markdown("<h1 style='text-align: right;'>😀 Saeed Logic</h1>", unsafe_allow_html=True)
-st.markdown("<h4 style='text-align: right; color: #888;'>ذكاء اصطناعي محلي 100% — بدون API، بدون مفاتيح إنترنت</h4>", unsafe_allow_html=True)
-st.write("---")
-
-# 🎥 هنا تم طرح كود الشخصية الرقمية المتحدثة
-# يتحقق النظام أولاً إذا كان ملف الفيديو موجوداً ليعرضه فوراً
-if os.path.exists("avatar.mp4"):
-    st.video("avatar.mp4", loop=True, autoplay=True, muted=True)
-else:
-    st.info("ℹ️ مكان شخصية الذكاء الاصطناعي المتحدثة جاهز؛ سيظهر الفيديو هنا تلقائياً بمجرد رفع ملف 'avatar.mp4' إلى حسابك في GitHub.")
-
-st.write("---")
-
-# كود استقبال اسم الزبون للترحيب به بشكل مؤقت وآمن
-user_name = st.text_input("مرحباً بك في Saeed LogiC! يرجى كتابة اسمك لنبدأ:", placeholder="اكتب اسمك هنا...")
-
-if user_name:
-    st.success(f"👋 أهلاً بك يا **{user_name}**، كيف يمكنني مساعدتك اليوم في سعيد ماركت؟")
-else:
-    st.info("💡 يرجى كتابة اسمك في الخانة أعلاه ليخاطبك البوت باسمك الشخصي.")
-
-st.write("---")
-
-
-# ====================================================
-# القسم 4: استقبال سؤال المستخدم ومعالجته بالذكاء الاصطناعي
-# ====================================================
-
-# تخصيص نص السؤال ليتفاعل مع اسم الزبون إذا كُتب
-input_label = f"اطرح سؤالك هنا يا {user_name}:" if user_name else "اطرح سؤالك هنا:"
-user_input = st.text_input(input_label, placeholder="اكتب سؤالك هنا...", key="user_question")
-
-if user_input:
-    with st.spinner("جاري التفكير وتحليل الإجابة... ⏳"):
+    while True:
         try:
-            # التحقق الوقائي من وجود دالة الاستجابة لتجنب الانهيار
-            if hasattr(st.session_state.engine, "answer"):
-                response = st.session_state.engine.answer(user_input)
-                st.success(response)
-            else:
-                st.error("❌ خطأ برمجي: دالة الاستجابة (answer) غير معرّفة بالشكل الصحيح داخل ملف inference.py")
-        except AttributeError as ae:
-            st.error(f"⚠️ تنبيه خصائص (AttributeError): {ae}")
-            st.info("يوجد نقص أو خطأ إملائي في تعريف المتغيرات البرمجية داخل ملف inference.py الخاص بك.")
-        except Exception as e:
-            st.error(f"❌ حدث خطأ غير متوقع: {e}")
+            user_input = input("أنت: ")
+            if user_input.lower() in ['خروج', 'exit']:
+                print("تم إغلاق نظام Saeed Logic بنجاح. في أمان الله!")
+                break
+                
+            if not user_input.strip():
+                continue
 
-st.write("---")
+            bot_response = engine.get_response(user_input)
+            print(f"Saeed Logic: {bot_response}\n")
 
+        except KeyboardInterrupt:
+            print("\nتم إنهاء الجلسة.")
+            sys.exit(0)
 
-# ====================================================
-# القسم 5: صندوق إضافة وتحديث المعرفة (محمي برقم سري خاص بسعيد)
-# ====================================================
-
-with st.expander("🔐 لوحة التحكم وإضافة المعرفة (خاص بالإدارة)"):
-    # خانة لإدخال الرقم السري (تظهر النجوم بدلاً من الأرقام لحماية السرية)
-    admin_password = st.text_input("أدخل الرقم السري للوصول لخيارات التدريب:", type="password", key="admin_pwd")
-    
-    # تأكيد الرقم السري (يمكنك تغيير "1234" إلى أي رقم تريده)
-    if admin_password == "ALISAEEDDTCOM-8*LogeC":
-        st.success("🔓 أهلاً بك يا سعيد، تم التحقق بنجاح. يمكنك التعديل الآن:")
-        
-        new_q = st.text_input("السؤال الجديد:", key="new_q")
-        new_a = st.text_area("الإجابة المقترحة له:", key="new_a")
-        
-        if st.button("حفظ في الذاكرة 💾", key="save_btn"):
-            if new_q and new_a:
-                try:
-                    if hasattr(st.session_state.engine, "add_knowledge"):
-                        success = st.session_state.engine.add_knowledge(new_q, new_a)
-                        if success:
-                            st.success("✅ تم حفظ المعلومة بنجاح في قاعدة بياناتك المحلية!")
-                            st.balloons()
-                        else:
-                            st.error("❌ حدث خطأ أثناء الحفظ، يرجى المحاولة مجدداً.")
-                    else:
-                        st.error("❌ خطأ برمجي: دالة إضافة المعرفة (add_knowledge) غير موجودة in ملف inference.py")
-                except Exception as e:
-                    st.error(f"❌ حدث خطأ أثناء محاولة الحفظ: {e}")
-            else:
-                st.warning("⚠️ يرجى كتابة السؤال والإجابة أولاً قبل الضغط على حفظ.")
-    
-    elif admin_password:
-        st.error("❌ الرقم السري غير صحيح! لا يمكنك تعديل بيانات النظام.")
-
-
-# ====================================================
-# القسم 6: تذييل الصفحة (Footer)
-# ====================================================
-
-st.write("---")
-st.markdown("<p style='text-align: center; color: #888;'>🚀 نظام ذكاء اصطناعي محلي يعمل بدون إنترنت</p>", unsafe_allow_html=True)
-
+if __name__ == "__main__":
+    main()
