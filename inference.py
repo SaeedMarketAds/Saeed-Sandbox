@@ -1,6 +1,6 @@
 import os
 import json
-from utils import load_json, save_json, ensure_dir
+from app_utils import load_json, save_json, ensure_dir
 
 # نحاول استيراد مكتبة ollama، وإذا لم تكن مثبتة نعطي رسالة واضحة بدل انهيار البرنامج
 try:
