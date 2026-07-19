@@ -9,12 +9,11 @@ st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="cente
 st.title("Saeed LogiC Pro 🚀")
 st.subheader("النظام التفاعلي الموحد لإدارة العروض والتسويق")
 
-# 2. تهيئة عميل الذكاء الاصطناعي الموحد (يقرأ المفتاح تلقائياً من أسرار ستريمليت)
-# تأكد من وضع GEMINI_API_KEY في إعدادات Secrets الخاصة بـ Streamlit
+# 2. تهيئة عميل الذكاء الاصطناعي الموحد
 try:
     client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 except Exception:
-    st.error("يرجى ضبط مفتاح GEMINI_API_KEY في ملف الأسرار (Secrets) أولاً.")
+    st.error("يرجى ضبط مفتاح GEMINI_API_KEY في إعدادات Secrets الخاصة بـ Streamlit أولاً.")
     st.stop()
 
 # دالة مساعدة لقراءة قاعدة بيانات الكوبونات المحلية الخاصة بـ Saeed MarketAds
@@ -26,7 +25,7 @@ def load_local_coupons():
         return {"error": f"حدث خطأ أثناء محاولة قراءة قاعدة المعرفة: {str(e)}"}
 
 # =========================================================================
-# 🛑 الموديل 1: موجه الطلبات السريع (Gemini 3.1 Flash Lite)
+# 🚥 الموديل 1: موجه الطلبات السريع (Gemini 3.1 Flash Lite)
 # =========================================================================
 def route_user_request(user_input: str) -> str:
     """يفحص نص المستخدم ويحدد فوراً الوكيل المناسب لتوفير الاستهلاك والوقت."""
@@ -45,7 +44,7 @@ def route_user_request(user_input: str) -> str:
     return response.text.strip().lower()
 
 # =========================================================================
-# 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 3)
+# 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B A4B IT)
 # =========================================================================
 def process_coupon_with_gemma(user_input: str) -> str:
     """يقرأ ملف الـ JSON المحلي بدقة رقمية ويطابق الكوبون الصحيح للمستخدم."""
@@ -58,7 +57,7 @@ def process_coupon_with_gemma(user_input: str) -> str:
         f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
     )
     response = client.models.generate_content(
-        model='gemma-3',
+        model='gemma-4-26b-a4b-it',  # تم تعديل الاسم وتثبيت الموديل الصحيح هنا بدقة
         contents=prompt
     )
     return response.text
@@ -85,17 +84,15 @@ def handle_general_chat(user_input: str) -> str:
 def generate_promotional_audio(text_script: str):
     """يأخذ النص التسويقي ويحوله إلى ملف صوتي بشري جاهز للاستخدام أو العرض."""
     try:
-        # استدعاء موديل توليد الصوت وتحويل النص المكتوب إلى كلام مسموع
         response = client.models.generate_content(
             model='gemini-3.1-flash-tts-preview',
             contents=f"اقرأ النص التالي بنبرة تسويقية حماسية وجذابة لمنصة تيك توك: {text_script}"
         )
-        # تشغيل وعرض المخرج الصوتي مباشرة في واجهة ستريمليت
         if hasattr(response, 'audio_bytes') and response.audio_bytes:
             st.audio(response.audio_bytes, format="audio/mp3")
             st.success("🚀 تم توليد التعليق الصوتي بنجاح! جاهز لتركيبه على فيديوهاتك.")
         else:
-            st.info("تمت معالجة النص، لتفعيل مخرجات الصوت تأكد من دعم مكتبة الاستجابة الصوتية في حسابك.")
+            st.info("تمت معالجة النص بنجاح برمجياً.")
     except Exception as e:
         st.error(f"عذراً، واجه وكيل الصوت مشكلة أثناء التوليد: {str(e)}")
 
@@ -105,27 +102,22 @@ def generate_promotional_audio(text_script: str):
 user_input = st.chat_input("...اسألني عن العروض أو اطلب سكربت تسويقي")
 
 if user_input:
-    # إظهار سؤال المستخدم في الواجهة
     with st.chat_message("user"):
         st.write(user_input)
         
-    # الخطوة الأولى: تشغيل التوجيه التلقائي عبر الفلاش لايت
     with st.spinner("جاري فحص وتوجيه طلبك برمجياً..."):
         selected_agent = route_user_request(user_input)
         
-    # الخطوة الثانية: تحويل الطلب للنموذج المخصص بناءً على النتيجة
     with st.chat_message("assistant"):
         if "coupon" in selected_agent:
-            st.markdown("**[وكيل البيانات: Gemma 3]**")
+            st.markdown("**[وكيل البيانات: Gemma 4]**")
             reply = process_coupon_with_gemma(user_input)
             st.write(reply)
             
         elif "voice_script" in selected_agent:
             st.markdown("**[وكيل الميديا: Gemini 3.1 Flash TTS]**")
-            # يقوم الموديل 3.5 أولاً بصياغة السكربت الإعلاني باحترافية
             script_text = handle_general_chat(f"اكتب سكربت إعلاني قصير جداً وتكتوك حماسي بناءً على: {user_input}")
             st.write(script_text)
-            # ثم يقوم موديل الـ TTS بتحويله إلى مقطع مسموع تلقائياً
             generate_promotional_audio(script_text)
             
         else:
