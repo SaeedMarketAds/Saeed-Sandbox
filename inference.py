@@ -1,87 +1,93 @@
-import os
 import json
-from app_utils import load_json, save_json, ensure_dir
-
-# نحاول استيراد مكتبة ollama، وإذا لم تكن مثبتة نعطي رسالة واضحة بدل انهيار البرنامج
-try:
-    import ollama
-    OLLAMA_AVAILABLE = True
-except ImportError:
-    OLLAMA_AVAILABLE = False
-
+import os
+from datetime import datetime
 
 class InferenceEngine:
-    def __init__(self, model_name: str = "deepseek-r1:1.5b"):
-        # اسم النموذج المستخدم عبر Ollama (يمكن تغييره لاحقاً من الواجهة إن أردت)
-        self.model_name = model_name
-
-        # تحديد مسارات الملفات والمجلدات
-        self.data_dir = "data"
-        self.memory_dir = "memory"
-        ensure_dir(self.data_dir)
-        ensure_dir(self.memory_dir)
-
-        self.knowledge_file = os.path.join(self.data_dir, "knowledge.json")
-
-        # كلمات ترحيبية افتراضية يبدأ بها التطبيق (تُستخدم كسياق مساعد فقط الآن، وليست إجابة مباشرة)
-        default_knowledge = {
-            "السلام عليكم": "وعليكم السلام ورحمة الله وبركاته! أهلاً بك في نظام Saeed Logic الذكي.",
-            "من أنت": "أنا Saeed Logic، نظام ذكاء اصطناعي محلي ومطور مخصص لمساعدتك في إدارة أعمالك الذكية بالكامل بدون إنترنت.",
-            "مرحبا": "أهلاً وسهلاً بك! سعيد جداً بخدمتك اليوم.",
-            "كيف حالك": "الحمد لله بأفضل حال! أتمنى أن تكون أنت وعملك في أتم الصحة والنجاح."
-        }
-        self.knowledge = load_json(self.knowledge_file, default_knowledge)
-
-        # حفظ المعرفة الافتراضية إن لم يكن الملف موجوداً من قبل
-        if not os.path.exists(self.knowledge_file):
-            save_json(self.knowledge_file, self.knowledge)
-
-    def _build_prompt(self, question: str) -> str:
-        """يبني نص التوجيه (prompt) الذي يُرسل للنموذج، مدمجاً فيه قاعدة المعرفة المحلية كسياق."""
-        return f"""أنت مساعد ذكي اسمه "Saeed Logic"، تتحدث العربية بطلاقة وبأسلوب ودود ومباشر.
-استخدم البيانات المحلية التالية (إن كانت ذات صلة بالسؤال) كمرجع أساسي للإجابة.
-إذا لم تكن هذه البيانات كافية، استخدم معرفتك العامة لتقديم إجابة مفيدة وصحيحة.
-لا تذكر أنك تستخدم "بيانات محلية" في ردك، فقط أجب بشكل طبيعي.
-
-البيانات المحلية المتوفرة (JSON):
-{json.dumps(self.knowledge, ensure_ascii=False)}
-
-سؤال المستخدم: {question}
-
-الإجابة:"""
-
-    def answer(self, question: str) -> str:
-        """يولّد إجابة عبر نموذج DeepSeek المحلي (Ollama)، مستعيناً بقاعدة المعرفة كسياق."""
-        if not question or not question.strip():
-            return "يرجى كتابة سؤال أولاً."
-
-        if not OLLAMA_AVAILABLE:
-            return (
-                "⚠️ مكتبة ollama غير مثبتة على هذا الجهاز.\n"
-                "ثبّتها عبر: pip install ollama\n"
-                "وتأكد أن تطبيق Ollama يعمل محلياً وأن النموذج "
-                f"'{self.model_name}' تم تحميله عبر: ollama pull {self.model_name}"
-            )
-
-        prompt = self._build_prompt(question.strip())
-
+    def __init__(self):
+        self.knowledge_path = "data/knowledge.json"
+        self.conversation_path = "data/conversation.json"
+        self.load_data()
+    
+    def load_data(self):
+        """تحميل البيانات من الملفات"""
         try:
-            response = ollama.generate(model=self.model_name, prompt=prompt)
-            text = response.get("response", "").strip()
-            return text if text else "لم أتمكن من توليد إجابة، حاول صياغة السؤال بشكل مختلف."
-        except Exception as e:
-            return (
-                "❌ تعذر الاتصال بنموذج Ollama المحلي.\n"
-                f"تفاصيل الخطأ: {e}\n\n"
-                "تأكد من:\n"
-                "1) تشغيل تطبيق/خدمة Ollama على جهازك.\n"
-                f"2) تحميل النموذج مسبقاً بالأمر: ollama pull {self.model_name}"
-            )
-
-    def add_knowledge(self, question: str, answer_text: str) -> bool:
-        """إضافة سؤال وإجابة جديدة لقاعدة المعرفة المحلية (تُستخدم كسياق للنموذج لاحقاً)."""
-        if not question or not answer_text:
+            with open(self.knowledge_path, "r", encoding="utf-8") as f:
+                self.knowledge = json.load(f)
+        except:
+            self.knowledge = {"coupons": [], "offers": []}
+        
+        try:
+            with open(self.conversation_path, "r", encoding="utf-8") as f:
+                self.conversations = json.load(f)
+        except:
+            self.conversations = []
+    
+    def save_data(self):
+        """حفظ البيانات في الملفات"""
+        with open(self.knowledge_path, "w", encoding="utf-8") as f:
+            json.dump(self.knowledge, f, ensure_ascii=False, indent=2)
+        
+        with open(self.conversation_path, "w", encoding="utf-8") as f:
+            json.dump(self.conversations, f, ensure_ascii=False, indent=2)
+    
+    def search(self, query):
+        """البحث عن عروض أو كوبونات مطابقة"""
+        results = []
+        query_lower = query.lower()
+        
+        for coupon in self.knowledge.get("coupons", []):
+            if (query_lower in coupon.get("store", "").lower() or
+                query_lower in coupon.get("code", "").lower() or
+                query_lower in coupon.get("description", "").lower()):
+                results.append(coupon)
+        
+        # تسجيل المحادثة
+        self.conversations.append({
+            "role": "user",
+            "content": query,
+            "timestamp": datetime.now().isoformat()
+        })
+        self.conversations.append({
+            "role": "assistant",
+            "content": f"تم العثور على {len(results)} نتيجة",
+            "timestamp": datetime.now().isoformat()
+        })
+        self.save_data()
+        
+        return results if results else None
+    
+    def add_coupon(self, store, code, description, link=""):
+        """إضافة كوبون جديد"""
+        try:
+            new_coupon = {
+                "store": store,
+                "code": code,
+                "description": description,
+                "link": link,
+                "date": datetime.now().strftime("%Y-%m-%d %H:%M")
+            }
+            
+            self.knowledge["coupons"].append(new_coupon)
+            self.save_data()
+            return True
+        except:
             return False
-
-        self.knowledge[question.strip()] = answer_text.strip()
-        return save_json(self.knowledge_file, self.knowledge)
+    
+    def get_all_coupons(self):
+        """الحصول على جميع الكوبونات"""
+        return self.knowledge.get("coupons", [])
+    
+    def delete_coupon(self, index):
+        """حذف كوبون حسب الفهرس"""
+        try:
+            if 0 <= index < len(self.knowledge["coupons"]):
+                del self.knowledge["coupons"][index]
+                self.save_data()
+                return True
+            return False
+        except:
+            return False
+    
+    def get_conversations(self):
+        """الحصول على سجل المحادثات"""
+        return self.conversations
