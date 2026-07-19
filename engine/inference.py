@@ -4,17 +4,18 @@ from datetime import datetime
 
 class InferenceEngine:
     def __init__(self):
-        # الاعتماد على المسارات الموحدة داخل مجلد data
+        # مسارات ملفات قاعدة المعرفة
         self.knowledge_path = "data/knowledge.json"
         self.memory_path = "data/conversation.json"
         
-        self.knowledge = self._load_json(self.knowledge_path) or {"coupons": [], "offers": []}
+        # تحميل البيانات
+        self.knowledge = self._load_json(self.knowledge_path) or {"coupons": []}
         self.memory = self._load_json(self.memory_path) or []
 
     def _load_json(self, path):
         if os.path.exists(path):
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception:
                 return None
@@ -22,74 +23,62 @@ class InferenceEngine:
 
     def _save_json(self, path, data):
         try:
-            with open(path, 'w', encoding='utf-8') as f:
+            with open(path, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             return True
         except Exception:
             return False
 
-    def search(self, search_term):
-        """البحث في الكوبونات المخزنة بناءً على اسم المتجر أو الكود أو الوصف"""
-        term = search_term.lower().strip()
-        results = {"coupons": []}
+    def search(self, query):
+        """
+        دالة البحث الذكية: تبحث في الكلمات المفتاحية، المتاجر، الأكواد، والأوصاف
+        """
+        query = query.strip().lower()
+        results = []
         
-        for coupon in self.knowledge.get("coupons", []):
-            if (term in coupon.get("store", "").lower() or 
-                term in coupon.get("code", "").lower() or 
-                term in coupon.get("description", "").lower()):
-                results["coupons"].append(coupon)
+        # جلب قائمة الكوبونات والعروض
+        coupons = self.knowledge.get("coupons", [])
         
-        # تسجيل عملية البحث في سجل الذاكرة والمحادثات
-        self._log_conversation("user", f"بحث عن: {search_term}")
-        self._log_conversation("assistant", f"تم العثور على {len(results['coupons'])} نتيجة")
-        
-        return results if results["coupons"] else None
+        for item in coupons:
+            match_found = False
+            
+            # 1. الفحص الذكي للكلمات المفتاحية (Keywords)
+            keywords = item.get("keywords", [])
+            for kw in keywords:
+                kw = kw.lower()
+                # إذا كانت الكلمة المفتاحية جزءاً من سؤال المستخدم (مثل: "السلام" داخل "السلام عليكم")
+                if kw in query or query in kw:
+                    match_found = True
+                    break
+            
+            # 2. الفحص التقليدي (اسم المتجر، الكود، الوصف)
+            store = item.get("store", "").lower()
+            code = item.get("code", "").lower()
+            desc = item.get("description", "").lower()
+            
+            if query in store or query in code or query in desc:
+                match_found = True
+                
+            # إذا تطابق البحث، أضف العرض إلى النتائج
+            if match_found:
+                results.append(item)
+                
+        return results
 
-    def add_coupon(self, store, code, description, link=""):
-        """إضافة كوبون جديد إلى ملف البيانات واعادة حفظه"""
+    def add_coupon(self, store, code, description, keywords=None):
+        if keywords is None:
+            keywords = []
+            
         new_coupon = {
             "store": store.strip(),
             "code": code.strip().upper(),
             "description": description.strip(),
-            "link": link.strip(),
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M")
+            "keywords": keywords,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         
         if "coupons" not in self.knowledge:
             self.knowledge["coupons"] = []
             
         self.knowledge["coupons"].append(new_coupon)
-        
-        # تسجيل الحدث في الذاكرة
-        self._log_conversation("system", f"إضافة كوبون لمتجر: {store.strip()}")
-        
         return self._save_json(self.knowledge_path, self.knowledge)
-
-    def get_all_coupons(self):
-        """جلب كافة الكوبونات المتوفرة"""
-        return self.knowledge.get("coupons", [])
-
-    def delete_coupon(self, index):
-        """حذف كوبون محدد بناءً على موقعه (index)"""
-        try:
-            if "coupons" in self.knowledge and 0 <= index < len(self.knowledge["coupons"]):
-                removed = self.knowledge["coupons"].pop(index)
-                self._log_conversation("system", f"حذف كوبون لمتجر: {removed.get('store')}")
-                return self._save_json(self.knowledge_path, self.knowledge)
-            return False
-        except Exception:
-            return False
-
-    def get_conversations(self):
-        """جلب سجل النشاط والمحادثات"""
-        return self.memory
-
-    def _log_conversation(self, role, content):
-        """دالة داخلية لتسجيل الحركات والمحادثات في ملف conversation.json"""
-        log_entry = {
-            "role": role,
-            "content": content,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        self.memory.append(log_entry)
-        self._save_json(self.memory_path, self.memory)
