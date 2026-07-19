@@ -1,4 +1,4 @@
-import os
+import os  # تعديل الحرف الكبير هنا ليعمل الكود
 import json
 from datetime import datetime
 from .utils import save_json, load_json
@@ -13,13 +13,17 @@ class InferenceEngine:
         self.memory = load_json(self.memory_path)
     
     def answer(self, user_input):
+        # تنظيف النص من الفراغات الزائدة في البداية والنهاية لضمان مطابقة أفضل
+        cleaned_input = user_input.strip()
+        
         try:
-            if user_input in self.knowledge:
-                response = self.knowledge[user_input]
+            if cleaned_input in self.knowledge:
+                response = self.knowledge[cleaned_input]
             else:
                 response = "⚠️ عفواً، لا أملك معلومات عن هذا السؤال حالياً."
             
-            self.memory[user_input] = {
+            # تسجيل المحادثة في الذاكرة
+            self.memory[cleaned_input] = {
                 'response': response,
                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
@@ -28,10 +32,12 @@ class InferenceEngine:
             return response
             
         except Exception as e:
-            return f"حدث خطأ: {e}"
+            # رسالة خطأ داخلية (يفضل تسجيلها في Logs في التطبيقات الحقيقية)
+            return f"حدث خطأ داخلي: {e}"
     
     def add_knowledge(self, question, answer):
-        self.knowledge[question] = answer
+        # تنظيف السؤال قبل تخزينه أيضاً
+        self.knowledge[question.strip()] = answer
         return save_json(self.knowledge_path, self.knowledge)
     
     def get_memory(self):
