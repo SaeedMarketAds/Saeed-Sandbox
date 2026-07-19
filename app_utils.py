@@ -1,28 +1,22 @@
-import os
 import json
+import os
 
-def ensure_dir(directory_path):
-    if not os.path.exists(directory_path):
-        os.makedirs(directory_path, exist_ok=True)
-
-def load_json(file_path, default_data=None):
-    if default_data is None:
-        default_data = {}
-    if not os.path.exists(file_path):
-        return default_data
+def load_json(file_path, default=None):
+    """تحميل ملف JSON بأمان"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception:
-        return default_data
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except:
+        pass
+    return default or {}
 
 def save_json(file_path, data):
-    dir_name = os.path.dirname(file_path)
-    if dir_name:
-        ensure_dir(dir_name)
+    """حفظ بيانات JSON بأمان"""
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
         return True
-    except Exception:
+    except:
         return False
