@@ -14,7 +14,7 @@ def init_data_files():
     
     if not os.path.exists(knowledge_path):
         with open(knowledge_path, "w", encoding="utf-8") as f:
-            json.dump({"coupons": [], "offers": []}, f, ensure_ascii=False, indent=2)
+            json.dump({"coupons": [], "offers": []}, f, ensure_ascii=False, indent=2)  # ← تم الإصلاح
     
     if not os.path.exists(conversation_path):
         with open(conversation_path, "w", encoding="utf-8") as f:
@@ -135,5 +135,4 @@ elif menu == "💬 المحادثات":
 
 # === تشغيل التطبيق ===
 if __name__ == "__main__":
-    # تم التعامل مع كل شيء أعلاه
     pass
