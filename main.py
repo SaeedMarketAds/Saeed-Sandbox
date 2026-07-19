@@ -7,7 +7,9 @@ st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="cente
 
 # إعداد مفتاح الـ API الخاص بـ Gemini (استبدله بمفتاحك الحقيقي)
 # يمكنك الحصول عليه مجاناً من Google AI Studio
-genai.configure(api_key="YOUR_GEMINI_API_KEY")
+# ربط المفتاح بشكل آمن ومشفر من إعدادات السيرفر
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
 
 st.title("Saeed LogiC Pro 🚀")
 st.subheader("نظام محلي لدمج العروض والكوبونات")
