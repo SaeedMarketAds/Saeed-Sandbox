@@ -1,20 +1,22 @@
-import streamlit as st
 import os
 import json
+import streamlit as st
 from datetime import datetime
 
-# === تهيئة المجلدات ===
-os.makedirs("data", exist_ok=True)
-os.makedirs("engine", exist_ok=True)
+# === 1. حل مشكلة تعارض الملفات والمجلدات وتجهيز البيئة ===
+for folder in ["data", "engine"]:
+    if os.path.exists(folder) and os.path.isfile(folder):
+        os.remove(folder)  # حذف الملف إذا وجد ليفسح المجال للمجلد
+    os.makedirs(folder, exist_ok=True)
 
-# === تهيئة ملفات البيانات ===
+# === 2. تهيئة ملفات البيانات الافتراضية ===
 def init_data_files():
     knowledge_path = "data/knowledge.json"
     conversation_path = "data/conversation.json"
     
     if not os.path.exists(knowledge_path):
         with open(knowledge_path, "w", encoding="utf-8") as f:
-            json.dump({"coupons": [], "offers": []}, f, ensure_ascii=False, indent=2)  # ← تم الإصلاح
+            json.dump({"coupons": [], "offers": []}, f, ensure_ascii=False, indent=2)
     
     if not os.path.exists(conversation_path):
         with open(conversation_path, "w", encoding="utf-8") as f:
@@ -22,14 +24,14 @@ def init_data_files():
 
 init_data_files()
 
-# === استيراد المحرك ===
+# === 3. استيراد المحرك ===
 try:
     from engine.inference import InferenceEngine
 except ImportError:
-    st.error("❌ خطأ: لم يتم العثور على ملف المحرك")
+    st.error("❌ خطأ: لم يتم العثور على ملف المحرك في مسار engine/inference.py")
     st.stop()
 
-# === تهيئة المحرك ===
+# === 4. تهيئة المحرك في جلسة Streamlit ===
 if "engine" not in st.session_state:
     try:
         st.session_state.engine = InferenceEngine()
@@ -37,7 +39,7 @@ if "engine" not in st.session_state:
         st.error(f"❌ فشل تهيئة المحرك: {str(e)}")
         st.stop()
 
-# === واجهة المستخدم ===
+# === 5. واجهة المستخدم والتصميم ===
 st.set_page_config(
     page_title="🛍️ Saeed LogiC",
     page_icon="🛒",
@@ -47,32 +49,29 @@ st.set_page_config(
 st.title("🛍️ مساعد التسوق Saeed LogiC")
 st.caption("نظامك المحلي المستقر لتتبع العروض والكوبونات - 100% بدون إنترنت")
 
-# === الشريط الجانبي ===
+# === 6. الشريط الجانبي والقائمة ===
 with st.sidebar:
     st.header("📋 القائمة")
-    
     menu = st.radio(
         "اختر الإجراء",
         ["🔍 البحث عن عرض", "➕ إضافة كود خصم", "📊 عرض الكوبونات", "💬 المحادثات"]
     )
-    
     st.divider()
     st.caption(f"🟢 النظام يعمل بثبات | {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
-# === الصفحات ===
+# === 7. معالجة الصفحات والعمليات ===
 if menu == "🔍 البحث عن عرض":
     st.subheader("🔍 ابحث عن متجر، كود، أو عرض محدد")
-    
     search_term = st.text_input("🔎 كلمة البحث", placeholder="مثال: كود نون الجديد أو فستان شي إن")
     
     if st.button("🔍 بحث", use_container_width=True):
         if search_term:
             result = st.session_state.engine.search(search_term)
             if result:
-                st.success("✅ النتائج:")
+                st.success("✅ النتائج المطابقة:")
                 st.json(result)
             else:
-                st.info("ℹ️ لا توجد نتائج مطابقة")
+                st.info("ℹ️ لا توجد نتائج مطابقة لكلمة البحث هذه.")
         else:
             st.warning("⚠️ الرجاء إدخال كلمة بحث")
 
@@ -104,7 +103,6 @@ elif menu == "➕ إضافة كود خصم":
 
 elif menu == "📊 عرض الكوبونات":
     st.subheader("📊 جميع الكوبونات والعروض")
-    
     coupons = st.session_state.engine.get_all_coupons()
     
     if coupons:
@@ -112,27 +110,22 @@ elif menu == "📊 عرض الكوبونات":
             with st.expander(f"🏪 {coupon.get('store', 'غير معروف')} - {coupon.get('code', '')}"):
                 st.write(f"**📝 التفاصيل:** {coupon.get('description', 'لا يوجد')}")
                 if coupon.get('link'):
-                    st.write(f"**🔗 الرابط:** {coupon['link']}")
-                st.caption(f"📅 الإضافة: {coupon.get('date', 'غير معروف')}")
+                    st.write(f"**🔗 الرابط:** [{coupon['link']}]({coupon['link']})")
+                st.caption(f"📅 تاريخ الإضافة: {coupon.get('date', 'غير معروف')}")
                 
                 if st.button(f"🗑️ حذف", key=f"del_{i}"):
                     if st.session_state.engine.delete_coupon(i):
                         st.rerun()
     else:
-        st.info("📭 لا توجد كوبونات محفوظة")
+        st.info("📭 لا توجد كوبونات محفوظة حالياً.")
 
 elif menu == "💬 المحادثات":
-    st.subheader("💬 سجل المحادثات")
-    
+    st.subheader("💬 سجل المحادثات والنشاط")
     conversations = st.session_state.engine.get_conversations()
     
     if conversations:
-        for conv in conversations[-10:]:  # آخر 10 محادثات
+        for conv in conversations[-10:]:  # عرض آخر 10 سجلات
             with st.chat_message(conv.get("role", "user")):
                 st.write(conv.get("content", ""))
     else:
-        st.info("📭 لا توجد محادثات مسجلة")
-
-# === تشغيل التطبيق ===
-if __name__ == "__main__":
-    pass
+        st.info("📭 لا توجد محادثات مسجلة بعد.")
