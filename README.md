@@ -1,110 +1,82 @@
 import streamlit as st
+import time
 
-# 1. إعدادات الصفحة الأساسية لتظهر بشكل ممتد ومناسب للهواتف والمتصفح
+# 1. إعدادات الصفحة
 st.set_page_config(
     page_title="Saeed LogiC",
     page_icon="🛍️",
-    layout="centered",
-    initial_sidebar_state="collapsed"
+    layout="centered"
 )
 
-# 2. إضافة لمسات CSS مخصصة لجعل الواجهة أنيقة واحترافية
+# 2. تصميم CSS لجعل المحادثة تبدو احترافية ومتناسقة باللغة العربية
 st.markdown("""
     <style>
-    /* تنسيق اتجاه النصوص ليدعم اللغة العربية بشكل كامل */
     .main .block-container {
         direction: RTL;
         text-align: right;
     }
-    
-    /* تصميم كروت الكوبونات الاحترافية */
-    .coupon-card {
-        background-color: #1e293b; /* لون خلفية داكن وأنيق */
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 15px;
-        border: 1px solid #334155;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-        transition: transform 0.3s ease, border-color 0.3s ease;
+    /* تنسيق صندوق الأفاتار */
+    .avatar-container {
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 20px;
     }
-    
-    /* تأثير خفيف عند تمرير الماوس أو الضغط على الكارت */
-    .coupon-card:hover {
-        transform: translateY(-3px);
-        border-color: #00f2fe; /* لون إضاءة مميز */
-    }
-    
-    /* تنسيق اسم المتجر داخل الكارت */
-    .store-name {
-        font-size: 20px;
-        font-weight: bold;
-        color: #00f2fe;
-        margin-bottom: 8px;
-    }
-    
-    /* تنسيق كود الكوبون ليكون بارزاً وسهل النسخ */
-    .coupon-code-box {
-        background: linear-gradient(135deg, #0072ff, #00f2fe);
-        color: #ffffff;
-        padding: 6px 16px;
-        border-radius: 8px;
-        font-weight: bold;
-        font-family: 'Courier New', Courier, monospace;
-        display: inline-block;
-        letter-spacing: 1px;
-    }
-    
-    /* تنسيق روابط المتاجر */
-    .store-link {
-        color: #94a3b8;
-        text-decoration: none;
-        font-size: 14px;
-        transition: color 0.2s;
-    }
-    .store-link:hover {
-        color: #00f2fe;
+    .avatar-img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 3px solid #00f2fe;
+        box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. الهيدر الرئيسي للتطبيق
-st.markdown("<h1 style='text-align: center; color: #00f2fe; margin-bottom: 5px;'>🛍️ Saeed LogiC</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #94a3b8; font-size: 16px;'>مساعد التسوق المحلي المستقر لتتبع العروض والكوبونات - 100% بدون إنترنت</p>", unsafe_allow_html=True)
+# 3. قسم الأفاتار المتكلم (مكانه في أعلى الواجهة ليقود المحادثة)
+st.markdown('<div class="avatar-container">', unsafe_allow_html=True)
+# يمكنك استبدال رابط الصورة برابط الأفاتار المتكلم الخاص بك (GIF أو فيديو أو رابط أداة مثل D-ID)
+st.markdown('<img class="avatar-img" src="https://via.placeholder.com/150" alt="Saeed Avatar">', unsafe_allow_html=True)
+st.markdown("<h3 style='color: #00f2fe; margin-top: 10px;'>مساعدك الذكي: Saeed LogiC</h3>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
 st.markdown("---")
 
-# 4. قسم البحث الذكي
-st.markdown("### 🔍 ابحث عن متجر، كود، أو عرض محدد")
-search_query = st.text_input("", placeholder="اكتب اسم المتجر أو الكود هنا (مثال: AliExpress، Noon)...", label_visibility="collapsed")
+# 4. إدارة سجل المحادثة (عشان التطبيق يتذكر الأسئلة والأجوبة أثناء الجلسة)
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "assistant", "content": "مرحباً بك! أنا مساعدك الذكي لتتبع الكوبونات والعروض. اسألني عن أي متجر أو كود تريد البحث عنه؟"}
+    ]
 
-# أزرار البحث بتنسيق متناسق
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    search_btn = st.button("🚀 ابدأ البحث الذكي", use_container_width=True)
+# عرض الرسائل السابقة من السجل بتنسيق أنيق
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-st.markdown("<br>", unsafe_allow_html=True)
+# 5. خانة إدخال السؤال والجواب (تظهر أسفل الشاشة بشكل تلقائي وأنيق)
+if user_query := st.chat_input("اسألني عن كوبون، متجر، أو عرض محدد..."):
+    
+    # عرض سؤال المستخدم فوراً في واجهة التشات
+    with st.chat_message("user"):
+        st.markdown(user_query)
+    
+    # حفظ سؤال المستخدم في السجل
+    st.session_state.messages.append({"role": "user", "content": user_query})
+    
+    # هنا يتم استدعاء المحرك الخاص بك (Inference Engine) للبحث عن الإجابة
+    # كمثال توضيحي سنضع استجابة محاكاة:
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        
+        # محاكاة كتابة الذكاء الاصطناعي خطوة بخطوة (تأثير ت typing)
+        raw_response = f"جاري البحث عن '{user_query}' في قاعدة البيانات المحلية... للأسف لا توجد نتائج مطابقة حالياً، تأكد من تحديث ملف البيانات."
+        
+        for chunk in raw_response.split():
+            full_response += chunk + " "
+            time.sleep(0.05)
+            message_placeholder.markdown(full_response + "▌")
+        
+        message_placeholder.markdown(full_response)
+    
+    # حفظ إجابة البوت في السجل
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
 
-# 5. عرض النتائج (مثال توضيحي لكيفية ظهور الكوبونات بالأناقة الجديدة)
-st.markdown("### ✨ آخر العروض والكوبونات المتاحة")
-
-# بيانات تجريبية لمحاكاة الشكل النهائي (ستربطها لاحقاً بملف knowledge.json)
-sample_data = [
-    {"store": "AliExpress", "code": "ALI50", "desc": "خصم يصل إلى 50% على الأجهزة الإلكترونية المختارة.", "link": "#"},
-    {"store": "SHEIN", "code": "FASHION20", "desc": "خصم إضافي 20% على تشكيلة الملابس الصيفية.", "link": "#"},
-    {"store": "Noon", "code": "NOON99", "desc": "شحن مجاني + خصم 10% على الطلبات فوق 200 ريال.", "link": "#"}
-]
-
-# حلقة تكرارية لعرض الكروت بناءً على البيانات
-for item in sample_data:
-    st.markdown(f"""
-        <div class="coupon-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="store-name">🏪 {item['store']}</div>
-                <div><a class="store-link" href="{item['link']}" target="_blank">🔗 زيارة المتجر</a></div>
-            </div>
-            <p style="color: #cbd5e1; margin: 10px 0 15px 0; font-size: 15px;">🎁 {item['desc']}</p>
-            <div style="display: flex; justify-content: space-between; align-items: center; direction: ltr;">
-                <span class="coupon-code-box">{item['code']}</span>
-                <span style="color: #64748b; font-size: 12px; direction: rtl;">⚡ كود فعال</span>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
