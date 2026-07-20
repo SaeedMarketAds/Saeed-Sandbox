@@ -1,9 +1,10 @@
 import json
 import os
+import re
+import asyncio
 import streamlit as st
 from google import genai
 from google.genai import types
-import asyncio
 import edge_tts
 
 # 1. إعداد واجهة وتصميم التطبيق
@@ -28,7 +29,7 @@ def load_local_coupons():
     except Exception as e:
         return {"error": f"حدث خطأ أثناء محاولة قراءة قاعدة المعرفة: {str(e)}"}
 
-# 4. الموديل 3: العقل الحواري العام والدعم الفني (Gemini 3.5 Flash)
+# 4. الموديل 1: العقل الحواري العام والدعم الفني (Gemini 3.5 Flash)
 def handle_general_chat(user_input: str) -> str:
     prompt = (
         f"أنت (Saeed LogiC Pro)، مساعد التسوق الذكي واللبق والمطور خصيصاً "
@@ -47,38 +48,18 @@ def handle_general_chat(user_input: str) -> str:
 def process_coupon_with_gemma(user_input: str) -> str:
     coupons_data = load_local_coupons()
     prompt = (
-        f"أنت وكيل البيانات المسؤول عن قواعد عروض Saeed MarketAds. "
+        f"أنت وكيل البيانات المسؤول عن قواعد عروض Saeed MarketAds.\n"
         f"بناءً على قاعدة البيانات المحلية التالية:\n{json.dumps(coupons_data, ensure_ascii=False)}\n"
-        f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}. "
-        f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
-    )
-        response = client_main.models.generate_content(
-        model='gemini-3.5-flash',
-        contents=prompt
-    )
-    return response.text.strip()
-
-
-# 5. الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B)
-def process_coupon_with_gemma(user_input: str) -> str:
-    coupons_data = load_local_coupons()
-    prompt = (
-        f"أنت وكيل البيانات المسؤول عن قواعد عروض Saeed MarketAds. "
-        f"\n{json.dumps(coupons_data, ensure_ascii=False)}\n:بناءً على قاعدة البيانات المحلية التالية"
-        f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input} ."
+        f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}.\n"
         f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
     )
     response = client_main.models.generate_content(
         model='gemma-4-26b-a4b-it',
         contents=prompt
     )
-    return response.text
+    return response.text.strip()
 
-
-# ==============================================================================
-# 6. الموديل 4: صانع التعليق الصوتي الواقعي وتنظيف النصوص
-# ==============================================================================
-
+# 6. صانع التعليق الصوتي الواقعي وتنظيف النصوص
 def clean_text_for_speech(text: str) -> str:
     # إزالة كافة النجوم ورموز التنسيق (Markdown)
     text = re.sub(r'\*+', '', text)
@@ -89,14 +70,11 @@ def clean_text_for_speech(text: str) -> str:
     text = re.sub(r'#+', '', text)
     return text.strip()
 
-
 async def _text_to_speech_async(text: str, output_path: str):
     voice = "ar-SA-HamedNeural"
-    # تنظيف النص من النجوم والأقواس قبل تحويله لصوت
     clean_text = clean_text_for_speech(text)
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save(output_path)
-
 
 def generate_promotional_audio(text_script: str):
     try:
@@ -110,9 +88,7 @@ def generate_promotional_audio(text_script: str):
     except Exception as e:
         st.error(f"عذراً يا غالي، واجه وكيل الصوت مشكلة: {str(e)}")
 
-
 # 7. توجيه الطلبات
-
 def route_user_request(user_input: str) -> str:
     lowered = user_input.lower()
     if any(w in lowered for w in ["كوبون", "خصم", "كود", "عروض", "عرض"]):
@@ -167,15 +143,10 @@ if user_input:
             script_text = handle_general_chat(f"اكتب سكربت إعلاني قصير جداً وتكتوك حماسي بناءً على: {user_input}")
             st.write(script_text)
             generate_promotional_audio(script_text)
-       
-         else: 
-           st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
+            
+        else:
+            st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(reply)
-    
-
-    
-            
-
 
