@@ -102,20 +102,37 @@ if "quick_action" not in st.session_state:
     st.session_state.quick_action = None
 
 st.markdown("<p style='text-align: right; margin-bottom: 5px; color: #888;'>⚡ اختصارات سريعة:</p>", unsafe_allow_html=True)
+import json
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("📋 العروض الكبرى", use_container_width=True):
-        coupons = knowledge_data.get("coupons", [])
-        if coupons:
-            st.success("🎉 إليك أحدث العروض والكوبونات المتاحة:")
-            for item in coupons:
-                st.markdown(f"### 🏷️ {item.get('store')}")
-                st.code(item.get('code'), language="text")
-                st.write(f"**الوصف:** {item.get('description')}")
-                st.divider()
-        else:
-            st.warning("لا توجد عروض مسجلة حالياً.")
+        try:
+            # قراءة قاعدة البيانات مباشرة وبشكل آمن
+            with open("data/knowledge.json", "r", encoding="utf-8") as f:
+                knowledge_data = json.load(f)
+            
+            coupons = knowledge_data.get("coupons", [])
+            if coupons:
+                st.success("🎉 إليك أحدث العروض والكوبونات المتاحة:")
+                for item in coupons:
+                    st.markdown(f"### 🏷️ {item.get('store')}")
+                    st.code(item.get('code'), language="text")
+                    st.write(f"**الوصف:** {item.get('description')}")
+                    st.divider()
+            else:
+                st.warning("لا توجد عروض مسجلة حالياً.")
+        except Exception as e:
+            st.error(f"تعذر قراءة قاعدة البيانات: {e}")
+
+with col2:
+    if st.button("🔥 جملة تسويقية", use_container_width=True):
+        st.info("💡 اختر المتجر المطلوب للحصول على النص التسويقي المخصص.")
+
+with col3:
+    if st.button("🎙️ سكريبت صوتي", use_container_width=True):
+        st.info("🎙️ جاهز لتوليد السكريبت الصوتي للترويج للعروض.")
 
 with col2:
     if st.button("🔥 جملة تسويقية", use_container_width=True):
