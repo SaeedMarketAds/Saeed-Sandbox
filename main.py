@@ -29,20 +29,22 @@ def load_local_coupons():
         return {"error": f"حدث خطأ أثناء محاولة قراءة قاعدة المعرفة: {str(e)}"}
 
 # =========================================================================
-# 🚥 الموديل 1: موجه الطلبات السريع (Gemini 3.1 Flash Lite)
+# 💻 الموديل 3: العقل الحواري العام والدعم الفني (Gemini 3.5 Flash)
 # =========================================================================
-def route_user_request(user_input: str) -> str:
+def handle_general_chat(user_input: str) -> str:
     prompt = (
-        f"قم بتصنيف الطلب التالي إلى تصنيف واحد فقط من الثلاثة: \n"
-        f"1. ('coupon') إذا كان العميل يسأل عن كود خصم، تخفيض، أو متجر مثل نون، شي إن، علي إكسبرس.\n"
-        f"2. ('voice_script') إذا طلب العميل كتابة سكربت إعلاني أو توليد صوت تسويقي لتيك توك.\n"
-        f"3. ('general') لأي سؤال آخر، تحية، أو دردشة عامة.\n"
-        f"أجب بالكلمة الإنجليزية فقط ('coupon' أو 'voice_script' أو 'general').\n"
+        f"أنت (Saeed LogiC Pro)، مساعد التسوق الذكي واللبق والمطور خصيصاً "
+        f"لصالح منصة وشبكة (Saeed MarketAds) الرائدة في العروض والتسويق الرقمي.\n"
+        f"أجب على العميل باختصار، وبلباقة ترحيبية عالية، واحترافية تامة. "
+        f"تذكر دائماً هويتك كمساعد تسوق واعتزازك بكونك مدعوماً من Saeed MarketAds لإدارة أقوى الكوبونات.\n"
         f"الطلب: {user_input}"
     )
     response = client_main.models.generate_content(
-        model='gemini-3.1-flash-lite',
+        model='gemini-3.5-flash',
         contents=prompt
+    )
+    return response.text
+
     )
     return response.text.strip().lower()
 
