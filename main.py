@@ -106,15 +106,24 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("📋 العروض الكبرى", use_container_width=True):
-        st.session_state.quick_action = "استخرج لي أقوى كوبونات وعروض اليوم من قاعدة البيانات"
+        coupons = knowledge_data.get("coupons", [])
+        if coupons:
+            st.success("🎉 إليك أحدث العروض والكوبونات المتاحة:")
+            for item in coupons:
+                st.markdown(f"### 🏷️ {item.get('store')}")
+                st.code(item.get('code'), language="text")
+                st.write(f"**الوصف:** {item.get('description')}")
+                st.divider()
+        else:
+            st.warning("لا توجد عروض مسجلة حالياً.")
 
 with col2:
     if st.button("🔥 جملة تسويقية", use_container_width=True):
-        st.session_state.quick_action = "اكتب لي عبارة تسويقية مزخرفة وجذابة لمنتج عشوائي"
+        st.info("💡 اختر المتجر المطلوب للحصول على النص التسويقي المخصص.")
 
 with col3:
-    if st.button("🎙️ سكربت صوتي", use_container_width=True):
-        st.session_state.quick_action = "صمم لي سكربت إعلاني قصير مع تفعيل التعليق الصوتي"
+    if st.button("🎙️ سكريبت صوتي", use_container_width=True):
+        st.info("🎙️ جاهز لتوليد السكريبت الصوتي للترويج للعروض.")
 
 chat_input_val = st.chat_input("اسأل Saeed LogiC عن العروض أو اطلب سكربت...")
 
