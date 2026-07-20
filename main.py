@@ -107,9 +107,8 @@ import json
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("📋 العروض الكبرى", use_container_width=True):
+    if st.button("📋 العروض الكبرى", use_container_width=True, key="btn_main_offers"):
         try:
-            # قراءة قاعدة البيانات مباشرة وبشكل آمن
             with open("data/knowledge.json", "r", encoding="utf-8") as f:
                 knowledge_data = json.load(f)
             
@@ -127,19 +126,11 @@ with col1:
             st.error(f"تعذر قراءة قاعدة البيانات: {e}")
 
 with col2:
-    if st.button("🔥 جملة تسويقية", use_container_width=True):
+    if st.button("🔥 جملة تسويقية", use_container_width=True, key="btn_main_marketing"):
         st.info("💡 اختر المتجر المطلوب للحصول على النص التسويقي المخصص.")
 
 with col3:
-    if st.button("🎙️ سكريبت صوتي", use_container_width=True):
-        st.info("🎙️ جاهز لتوليد السكريبت الصوتي للترويج للعروض.")
-
-with col2:
-    if st.button("🔥 جملة تسويقية", use_container_width=True):
-        st.info("💡 اختر المتجر المطلوب للحصول على النص التسويقي المخصص.")
-
-with col3:
-    if st.button("🎙️ سكريبت صوتي", use_container_width=True):
+    if st.button("🎙️ سكريبت صوتي", use_container_width=True, key="btn_main_script"):
         st.info("🎙️ جاهز لتوليد السكريبت الصوتي للترويج للعروض.")
 
 chat_input_val = st.chat_input("اسأل Saeed LogiC عن العروض أو اطلب سكربت...")
