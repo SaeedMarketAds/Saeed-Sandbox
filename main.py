@@ -175,20 +175,18 @@ if user_input:
             st.markdown("**[وكيل البيانات: Gemma 4]**")
             reply = process_coupon_with_gemma(user_input)
             st.write(reply)
-                elif "voice_script" in selected_agent:
-        st.markdown("**[وكيل الصوت: Gemini الصوت]**")
-        raw_script = handle_general_chat(f"اكتب سكريبت إعلاني قصير جداً وتنسيقي حماسي بناءً على: {user_input}")
-        
-        # 1. تجهيز النص العربي الفصيح وتعديل الأسماء قبل النطق
-        speech_text = prepare_text_for_speech(raw_script)
-        st.write(raw_script)
-        
-        # 2. توليد الصوت بالنص المجهز والمنظف
-        generate_promotional_audio(speech_text)
-
-                else:
-        st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
-        reply = handle_general_chat(user_input)
-        st.write(reply)
-        generate_promotional_audio(prepare_text_for_speech(reply))
-
+        elif "voice_script" in selected_agent:
+            st.markdown("**[وكيل الصوت: Gemini الصوت]**")
+            raw_script = handle_general_chat(f"اكتب سكريبت إعلاني قصير جداً وتنسيقي حماسي بناءً على: {user_input}")
+            
+            # 1. تجهيز النص العربي الفصيح وتعديل الأسماء قبل النطق
+            speech_text = prepare_text_for_speech(raw_script)
+            st.write(raw_script)
+            
+            # 2. توليد الصوت بالنص المجهز والمنظف
+            generate_promotional_audio(speech_text)
+        else:
+            st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
+            reply = handle_general_chat(user_input)
+            st.write(reply)
+            generate_promotional_audio(prepare_text_for_speech(reply))
