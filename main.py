@@ -46,7 +46,7 @@ def handle_general_chat(user_input: str) -> str:
     return response.text
 
     )
-    return response.text.strip().lower()
+    return response.text.strip()
 
 # =========================================================================
 # 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B A4B IT)
