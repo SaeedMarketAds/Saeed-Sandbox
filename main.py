@@ -6,6 +6,27 @@ import streamlit as st
 from google import genai
 from google.genai import types
 import edge_tts
+import edge_tts
+
+# --- دالة تجهيز وتنظيف النص للنطق الصوتي ---
+def prepare_text_for_speech(text: str) -> str:
+    replacements = {
+        "Saeed LogiC Pro": "سعيد لوجيك برو",
+        "Saeed LogiC": "سعيد لوجيك",
+        "Saeed MarketAds": "سعيد ماركت أدس",
+        "MarketAds": "ماركت أدس",
+        "Pro": "برو",
+        "SHEIN": "شي إن",
+        "AliExpress": "علي إكسبريس",
+        "Noon": "نون",
+    }
+    for eng_word, ara_word in replacements.items():
+        text = text.replace(eng_word, ara_word)
+    
+    text = re.sub(r'[*#_~`>\[\]\(\)]', '', text)
+    return text
+
+# 1. إعداد واجهة وتصميم التطبيق
 
 # 1. إعداد واجهة وتصميم التطبيق
 st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="centered")
