@@ -31,12 +31,34 @@ def load_local_coupons():
 #onse# =========================================================================
 # 💻 الموديل 3: العقل الحواري العام والدعم الفني (Gemini 3.5 Flash)
 # =========================================================================
+st.subheader("النظام التفاعلي الموحد لإدارة العروض والتسويق")
+
+# 2. تهيئة عملاء الذكاء الاصطناعي بالمفاتيح الجديدة
+try:
+    # العمل الرئيسي (البحث والفرز)
+    client_main = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    # عملاء الصوت المستقل (التعليق الصوتي)
+    client_audio = genai.Client(api_key=st.secrets["AUDIO_API_KEY"])
+except Exception as e:
+    st.error("❌ خطأ في قراءة المفاتيح من صندوق الأسرار")
+    st.info("تأكد من إدخال بيانات GEMINI_API_KEY و AUDIO_API_KEY بشكل صحيح داخل الإعدادات")
+    st.stop()
+
+# 3. دالة مساعدة لقراءة قاعدة بيانات الكوبونات المحلية الخاصة بـ Saeed MarketAds
+def load_local_coupons():
+    try:
+        with open("knowledge.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        return {"error": f"حدث خطأ أثناء محاولة قراءة قاعدة المصفوفة: {e}"}
+
+# 4. استخراج البيانات المالية
 def handle_general_chat(user_input: str) -> str:
     prompt = (
-        f"أنت (Saeed LogiC Pro)، مساعد التسوق الذكي واللبق والمطور خصيصاً "
-        f"لصالح منصة وشبكة (Saeed MarketAds) الرائدة في العروض والتسويق الرقمي.\n"
-        f"أجب على العميل باختصار، وبلباقة ترحيبية عالية، واحترافية تامة. "
-        f"تذكر دائماً هويتك كمساعد تسوق واعتزازك بكونك مدعوماً من Saeed MarketAds لإدارة أقوى الكوبونات.\n"
+        f"ساعدك السوق الذكي والبلق والمطور خصيصاً. (Saeed LogiC Pro.)"
+        f"الرائدة في العروض والتسويق الرقمي (MarketAds) لصالح منصة وشبكة."
+        f"أجب على العميل باختصار، وبلقابة ترحيبية عالية، واحترافية تامة."
+        f"تذكر دائماً هويتك كمساعد تسوق واعترافك بكوكب مدعوماً من Saeed MarketAds"
         f"الطلب: {user_input}"
     )
     response = client_main.models.generate_content(
@@ -45,25 +67,20 @@ def handle_general_chat(user_input: str) -> str:
     )
     return response.text.strip()
 
-# =========================================================================
-# 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma-4-26b-a4b-it)
-# =========================================================================
+# 5. استخراج البيانات المالية
 def process_coupon_with_gemma(user_input: str) -> str:
     coupons_data = load_local_coupons()
-    
     prompt = (
-        f"أنت وكيل البيانات المسؤول عن قواعد عروض Saeed MarketAds. "
-        f"بناءً على قاعدة البيانات المحلية التالية:\n{json.dumps(coupons_data, ensure_ascii=False)}\n"
-        f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}. "
-        f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
+        f"أكدت وكيل البيانات المسؤول عن قواعد عروض Saeed MarketAds."
+        f"بإضافة البيانات المالية: \n{json.dumps(coupons_data, ensure_ascii=False)}"
+        f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}"
+        f"إذا لم تجد كوداً مناسباً، قم باختصار وبلقابة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)"
     )
     response = client_main.models.generate_content(
         model='gemma-4-26b-a4b-it',
         contents=prompt
     )
-    return response.text
-.text
-
+    return response.text.strip()
         )
         
         # استخراج بايتات الصوت الذكية من رد المحرك
