@@ -52,24 +52,43 @@ def process_coupon_with_gemma(user_input: str) -> str:
         f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}. "
         f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
     )
+        response = client_main.models.generate_content(
+        model='gemini-3.5-flash',
+        contents=prompt
+    )
+    return response.text.strip()
+
+
+# 5. الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B)
+def process_coupon_with_gemma(user_input: str) -> str:
+    coupons_data = load_local_coupons()
+    prompt = (
+        f"أنت وكيل البيانات المسؤول عن قواعد عروض Saeed MarketAds. "
+        f"\n{json.dumps(coupons_data, ensure_ascii=False)}\n:بناءً على قاعدة البيانات المحلية التالية"
+        f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input} ."
+        f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
+    )
     response = client_main.models.generate_content(
         model='gemma-4-26b-a4b-it',
         contents=prompt
     )
     return response.text
 
-# =========================================================================
+
+# ==============================================================================
 # 6. الموديل 4: صانع التعليق الصوتي الواقعي وتنظيف النصوص
-# =========================================================================
+# ==============================================================================
+
 def clean_text_for_speech(text: str) -> str:
     # إزالة كافة النجوم ورموز التنسيق (Markdown)
     text = re.sub(r'\*+', '', text)
-    # إزالة التوجيهات البصرية بين أقواس مثل (المشهد البصري) أو [0:12]
+    # إزالة التوجيهات البصرية بين أقواس مثل [المشهد البصري] أو [0:12]
     text = re.sub(r'\[.*?\]', '', text)
     text = re.sub(r'\(.*?\)', '', text)
     # إزالة الهاشتاجات والرموز الزائدة
     text = re.sub(r'#+', '', text)
     return text.strip()
+
 
 async def _text_to_speech_async(text: str, output_path: str):
     voice = "ar-SA-HamedNeural"
@@ -78,20 +97,22 @@ async def _text_to_speech_async(text: str, output_path: str):
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save(output_path)
 
+
 def generate_promotional_audio(text_script: str):
     try:
         audio_file_path = "promo_voice.mp3"
         asyncio.run(_text_to_speech_async(text_script, audio_file_path))
-        
+
         with open(audio_file_path, "rb") as f:
             st.audio(f.read(), format="audio/mp3")
-            
-        st.success("🚀 تم توليد التعليق الصوتي الواقعي بنجاح!")
+
+        st.success("تم توليد التعليق الصوتي الواقعي بنجاح! 🎙")
     except Exception as e:
         st.error(f"عذراً يا غالي، واجه وكيل الصوت مشكلة: {str(e)}")
 
 
 # 7. توجيه الطلبات
+
 def route_user_request(user_input: str) -> str:
     lowered = user_input.lower()
     if any(w in lowered for w in ["كوبون", "خصم", "كود", "عروض", "عرض"]):
