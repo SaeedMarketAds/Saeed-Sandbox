@@ -43,10 +43,8 @@ def handle_general_chat(user_input: str) -> str:
         model='gemini-3.5-flash',
         contents=prompt
     )
-    return response.text
-
-    )
     return response.text.strip()
+
 
 # =========================================================================
 # 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B A4B IT)
