@@ -9,11 +9,15 @@ st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="cente
 st.title("Saeed LogiC Pro 🚀")
 st.subheader("النظام التفاعلي الموحد لإدارة العروض والتسويق")
 
-# 2. تهيئة عميل الذكاء الاصطناعي الموحد
+# 2. تهيئة عملاء الذكاء الاصطناعي بالمفاتيح الجديدة
 try:
-    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-except Exception:
-    st.error("يرجى ضبط مفتاح GEMINI_API_KEY في إعدادات Secrets الخاصة بـ Streamlit أولاً.")
+    # العميل الرئيسي (للبحث والفرز)
+    client_main = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    # عميل الصوت المستقل (للتعليق الصوتي)
+    client_audio = genai.Client(api_key=st.secrets["AUDIO_API_KEY"])
+except Exception as e:
+    st.error("❌ حدث خطأ في قراءة المفاتيح من صندوق الأسرار (Secrets)!")
+    st.info("تأكد من كتابة GEMINI_API_KEY و AUDIO_API_KEY بشكل صحيح داخل الإعدادات.")
     st.stop()
 
 # دالة مساعدة لقراءة قاعدة بيانات الكوبونات المحلية الخاصة بـ Saeed MarketAds
@@ -28,7 +32,6 @@ def load_local_coupons():
 # 🚥 الموديل 1: موجه الطلبات السريع (Gemini 3.1 Flash Lite)
 # =========================================================================
 def route_user_request(user_input: str) -> str:
-    """يفحص نص المستخدم ويحدد فوراً الوكيل المناسب لتوفير الاستهلاك والوقت."""
     prompt = (
         f"قم بتصنيف الطلب التالي إلى تصنيف واحد فقط من الثلاثة: \n"
         f"1. ('coupon') إذا كان العميل يسأل عن كود خصم، تخفيض، أو متجر مثل نون، شي إن، علي إكسبرس.\n"
@@ -37,7 +40,7 @@ def route_user_request(user_input: str) -> str:
         f"أجب بالكلمة الإنجليزية فقط ('coupon' أو 'voice_script' أو 'general').\n"
         f"الطلب: {user_input}"
     )
-    response = client.models.generate_content(
+    response = client_main.models.generate_content(
         model='gemini-3.1-flash-lite',
         contents=prompt
     )
@@ -47,7 +50,6 @@ def route_user_request(user_input: str) -> str:
 # 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B A4B IT)
 # =========================================================================
 def process_coupon_with_gemma(user_input: str) -> str:
-    """يقرأ ملف الـ JSON المحلي بدقة رقمية ويطابق الكوبون الصحيح للمستخدم."""
     coupons_data = load_local_coupons()
     
     prompt = (
@@ -56,8 +58,8 @@ def process_coupon_with_gemma(user_input: str) -> str:
         f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}. "
         f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
     )
-    response = client.models.generate_content(
-        model='gemma-4-26b-a4b-it',  # تم تعديل الاسم وتثبيت الموديل الصحيح هنا بدقة
+    response = client_main.models.generate_content(
+        model='gemma-4-26b-a4b-it',
         contents=prompt
     )
     return response.text
@@ -66,13 +68,12 @@ def process_coupon_with_gemma(user_input: str) -> str:
 # 💻 الموديل 3: العقل الحواري العام والدعم الفني (Gemini 3.5 Flash)
 # =========================================================================
 def handle_general_chat(user_input: str) -> str:
-    """يتولى الرد على الأسئلة العامة والتحيات بأسلوب تفاعلي ذكي وسريع."""
     prompt = (
         f"أنت مساعد تسوق ذكي ولبق لتطبيق (Saeed LogiC Pro). "
         f"أجب على العميل باختصار وبلهجة ترحيبية وتذكر دائماً هويتك كمساعد تسوق. "
         f"الطلب: {user_input}"
     )
-    response = client.models.generate_content(
+    response = client_main.models.generate_content(
         model='gemini-3.5-flash',
         contents=prompt
     )
@@ -82,22 +83,33 @@ def handle_general_chat(user_input: str) -> str:
 # 🎬 الموديل 4: المعلق وصانع الميديا الصوتي (Gemini 3.1 Flash TTS Preview)
 # =========================================================================
 def generate_promotional_audio(text_script: str):
-    """يأخذ النص التسويقي ويحوله إلى ملف صوتي بشري جاهز للاستخدام أو العرض."""
     try:
-        response = client.models.generate_content(
+        # هنا نستخدم عميل الصوت المستقل AUDIO_API_KEY لتخفيف الضغط
+        response = client_audio.models.generate_content(
             model='gemini-3.1-flash-tts-preview',
             contents=f"اقرأ النص التالي بنبرة تسويقية حماسية وجذابة لمنصة تيك توك: {text_script}"
         )
         if hasattr(response, 'audio_bytes') and response.audio_bytes:
             st.audio(response.audio_bytes, format="audio/mp3")
-            st.success("🚀 تم توليد التعليق الصوتي بنجاح! جاهز لتركيبه على فيديوهاتك.")
+            st.success("🚀 تم توليد التعليق الصوتي بنجاح!")
         else:
             st.info("تمت معالجة النص بنجاح برمجياً.")
     except Exception as e:
-        st.error(f"عذراً، واجه وكيل الصوت مشكلة أثناء التوليد: {str(e)}")
+        # إذا فشل المفتاح الثاني لأي سبب، نقوم بالتحويل الاحتياطي للمفتاح الثالث تلقائياً
+        st.warning("جاري محاولة التوليد عبر المحرك الاحتياطي...")
+        try:
+            client_backup = genai.Client(api_key=st.secrets["BACKUP_API_KEY"])
+            response = client_backup.models.generate_content(
+                model='gemini-3.1-flash-tts-preview',
+                contents=f"اقرأ النص التالي بنبرة تسويقية حماسية: {text_script}"
+            )
+            if hasattr(response, 'audio_bytes') and response.audio_bytes:
+                st.audio(response.audio_bytes, format="audio/mp3")
+        except Exception as backup_error:
+            st.error(f"عذراً، واجه وكيل الصوت مشكلة: {str(backup_error)}")
 
 # =========================================================================
-# 🔄 محرك التشغيل والربط التلقائي بين الوكلاء والموديلات
+# 🔄 محرك التشغيل والربط التلقائي
 # =========================================================================
 user_input = st.chat_input("...اسألني عن العروض أو اطلب سكربت تسويقي")
 
