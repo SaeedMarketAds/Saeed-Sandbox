@@ -149,4 +149,3 @@ if user_input:
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(reply)
-
