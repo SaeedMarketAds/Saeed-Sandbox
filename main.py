@@ -135,12 +135,15 @@ if user_input:
             script_text = handle_general_chat(f"اكتب سكربت إعلاني قصير جداً وتكتوك حماسي بناءً على: {user_input}")
             st.write(script_text)
             generate_promotional_audio(script_text)
-       else:
-            st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
+       
+         else: 
+           st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(reply)
+    
 
+    
             
 
 
