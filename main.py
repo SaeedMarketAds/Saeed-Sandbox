@@ -149,12 +149,42 @@ def generate_promotional_audio(text_script: str):
                 st.audio(response.audio_bytes, format="audio/mp3")
         except Exception as backup_error:
             st.error(f"عذراً، واجه وكيل الصوت مشكلة: {str(backup_error)}")
-
 # =========================================================================
-# 🔄 محرك التشغيل والربط التلقائي
+# 🔄 محرك التشغيل والربط التلقائي مع أزرار الوصول السريع
 # =========================================================================
-user_input = st.chat_input("...اسألني عن العروض أو اطلب سكربت تسويقي")
 
+# 1. تهيئة متغير الإدخال السريع في الذاكرة
+if "quick_action" not in st.session_state:
+    st.session_state.quick_action = None
+
+# 2. تصميم صف الأزرار الأفقية (يشبه حافظة ومختصرات لوحة المفاتيح)
+st.markdown("<p style='text-align: right; margin-bottom: 5px; color: #888;'>⚡ اختصارات سريعة:</p>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("📋 الحافظة (عروض اليوم)", use_container_width=True):
+        st.session_state.quick_action = "استخرج لي أقوى كوبونات وعروض اليوم من قاعدة البيانات"
+
+with col2:
+    if st.button("🔥 جُمَلْ مُزْخْرَفَةٌ التسويقية", use_container_width=True):
+        st.session_state.quick_action = "اكتب لي عبارة تسويقية مزخرفة وجذابة لمنتج عشوائي"
+
+with col3:
+    if st.button("🎙️ سكربت صوتي تيك توك", use_container_width=True):
+        st.session_state.quick_action = "صمم لي سكربت إعلاني قصير مع تفعيل التعليق الصوتي"
+
+# 3. استقبال النص سواء من الكتابة أو من ضغط الأزرار السريعة
+chat_input_val = st.chat_input("اسأل Saeed LogiC عن العروض أو اطلب سكربت...")
+
+# تحديد المدخل الفعلي
+user_input = None
+if chat_input_val:
+    user_input = chat_input_val
+elif st.session_state.quick_action:
+    user_input = st.session_state.quick_action
+    st.session_state.quick_action = None # تفريغ الذاكرة بعد الاستخدام
+
+# 4. معالجة الطلب وبث النتيجة
 if user_input:
     with st.chat_message("user"):
         st.write(user_input)
@@ -169,7 +199,7 @@ if user_input:
             st.write(reply)
             
         elif "voice_script" in selected_agent:
-            st.markdown("**[وكيل الميديا: Gemini 3.1 Flash TTS]**")
+            st.markdown("**[وكيل الميديا: Gemini الصوت]**")
             script_text = handle_general_chat(f"اكتب سكربت إعلاني قصير جداً وتكتوك حماسي بناءً على: {user_input}")
             st.write(script_text)
             generate_promotional_audio(script_text)
@@ -178,3 +208,7 @@ if user_input:
             st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
             reply = handle_general_chat(user_input)
             st.write(reply)
+
+
+#
+
