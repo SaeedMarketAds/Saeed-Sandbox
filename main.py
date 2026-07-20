@@ -59,12 +59,23 @@ def process_coupon_with_gemma(user_input: str) -> str:
     return response.text
 
 # =========================================================================
-# 🎙️ الموديل 4: صانع التعليق الصوتي الواقعي (Microsoft Neural)
+# 6. الموديل 4: صانع التعليق الصوتي الواقعي وتنظيف النصوص
 # =========================================================================
+def clean_text_for_speech(text: str) -> str:
+    # إزالة كافة النجوم ورموز التنسيق (Markdown)
+    text = re.sub(r'\*+', '', text)
+    # إزالة التوجيهات البصرية بين أقواس مثل (المشهد البصري) أو [0:12]
+    text = re.sub(r'\[.*?\]', '', text)
+    text = re.sub(r'\(.*?\)', '', text)
+    # إزالة الهاشتاجات والرموز الزائدة
+    text = re.sub(r'#+', '', text)
+    return text.strip()
+
 async def _text_to_speech_async(text: str, output_path: str):
-    # الصوت السعودي الفخم ("ar-SA-HamedNeural")
     voice = "ar-SA-HamedNeural"
-    communicate = edge_tts.Communicate(text, voice)
+    # تنظيف النص من النجوم والأقواس قبل تحويله لصوت
+    clean_text = clean_text_for_speech(text)
+    communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save(output_path)
 
 def generate_promotional_audio(text_script: str):
