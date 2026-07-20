@@ -51,18 +51,58 @@ def handle_general_chat(user_input: str) -> str:
 # =========================================================================
 # 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B A4B IT)
 # =========================================================================
-def process_coupon_with_gemma(user_input: str) -> str:
-    coupons_data = load_local_coupons()
-    
-    prompt = (
-        f"أنت وكيل البيانات المسؤول عن قواعد عروض Saeed MarketAds. "
-        f"بناءً على قاعدة البيانات المحلية التالية:\n{json.dumps(coupons_data, ensure_ascii=False)}\n"
-        f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}. "
-        f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
-    )
-    response = client_main.models.generate_content(
-        model='gemma-4-26b-a4b-it',
-        contents=prompt
+def# =========================================================================
+# 🎬 الموديل 4: المعلق وصانع الميديا الصوتي الفخم
+# =========================================================================
+def generate_promotional_audio(text_script: str):
+    try:
+        # استخدام عميل الصوت المستقل وتمرير أمر توليد الصوت AUDIO
+        response = client_audio.models.generate_content(
+            model='gemini-2.5-flash',  # استخدام الموديل الفلاشي السريع والداعم للصوت
+            contents=f"اقرأ النص التالي بنبرة تسويقية حماسية وجذابة لمنصة تيك توك: {text_script}",
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"]  # إجبار المحرك على إرجاع صوت نقي
+            )
+        )
+        
+        # استخراج بايتات الصوت الذكية من رد المحرك
+        audio_bytes = None
+        for part in response.candidates[0].content.parts:
+            if part.inline_data and part.inline_data.mime_type.startswith("audio/"):
+                audio_bytes = part.inline_data.data
+                break
+                
+        if audio_bytes:
+            st.audio(audio_bytes, format="audio/mp3")
+            st.success("🚀 تم توليد التعليق الصوتي بنجاح واحترافية!")
+        else:
+            st.warning("تم معالجة النص ولكن لم يتم إرجاع بايتات صوتية، تأكد من إعدادات الموديل.")
+            
+    except Exception as e:
+        # التحويل التلقائي الذكي للمحرك الاحتياطي في حال حدوث أي ضغط
+        st.warning("جاري محاولة التوليد عبر المحرك السحابي الاحتياطي...")
+        try:
+            client_backup = genai.Client(api_key=st.secrets["BACKUP_API_KEY"])
+            response = client_backup.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=f"اقرأ النص التالي بنبرة تسويقية حماسية: {text_script}",
+                config=types.GenerateContentConfig(
+                    response_modalities=["AUDIO"]
+                )
+            )
+            
+            audio_bytes = None
+            for part in response.candidates[0].content.parts:
+                if part.inline_data and part.inline_data.mime_type.startswith("audio/"):
+                    audio_bytes = part.inline_data.data
+                    break
+                    
+            if audio_bytes:
+                st.audio(audio_bytes, format="audio/mp3")
+                st.success("🚀 تم الإنقاذ والتوليد عبر المحرك الاحتياطي بنجاح!")
+        except Exception as backup_error:
+            st.error(f"عذراً يا غالي، واجه وكيل الصوت مشكلة كاملة: {str(backup_error)}")
+
     )
     return response.text
 
