@@ -3,6 +3,8 @@ import os
 import streamlit as st
 from google import genai
 from google.genai import types
+import asyncio
+import edge_tts
 
 # 1. إعداد واجهة وتصميم التطبيق
 st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="centered")
@@ -56,28 +58,27 @@ def process_coupon_with_gemma(user_input: str) -> str:
     )
     return response.text
 
-# 6. الموديل 4: صانع التعليق الصوتي
+# =========================================================================
+# 🎙️ الموديل 4: صانع التعليق الصوتي الواقعي (Microsoft Neural)
+# =========================================================================
+async def _text_to_speech_async(text: str, output_path: str):
+    # الصوت السعودي الفخم ("ar-SA-HamedNeural")
+    voice = "ar-SA-HamedNeural"
+    communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(output_path)
+
 def generate_promotional_audio(text_script: str):
     try:
-        response = client_audio.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=f"اقرأ النص التالي بنبرة تسويقية حماسية وجذابة لمنصة تيك توك: {text_script}",
-            config=types.GenerateContentConfig(
-                response_modalities=["AUDIO"]
-            )
-        )
-        audio_bytes = None
-        for part in response.candidates[0].content.parts:
-            if part.inline_data and part.inline_data.mime_type.startswith("audio/"):
-                audio_bytes = part.inline_data.data
-                break
-        if audio_bytes:
-            st.audio(audio_bytes, format="audio/mp3")
-            st.success("🚀 تم توليد التعليق الصوتي بنجاح!")
-        else:
-            st.warning("تعذر استخراج الصوت حالياً.")
+        audio_file_path = "promo_voice.mp3"
+        asyncio.run(_text_to_speech_async(text_script, audio_file_path))
+        
+        with open(audio_file_path, "rb") as f:
+            st.audio(f.read(), format="audio/mp3")
+            
+        st.success("🚀 تم توليد التعليق الصوتي الواقعي بنجاح!")
     except Exception as e:
-        st.error(f"واجه وكيل الصوت مشكلة: {str(e)}")
+        st.error(f"عذراً يا غالي، واجه وكيل الصوت مشكلة: {str(e)}")
+
 
 # 7. توجيه الطلبات
 def route_user_request(user_input: str) -> str:
