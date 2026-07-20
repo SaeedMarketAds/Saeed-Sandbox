@@ -186,9 +186,9 @@ if user_input:
         # 2. توليد الصوت بالنص المجهز والمنظف
         generate_promotional_audio(speech_text)
 
-            
-        else:
-            st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
-            reply = handle_general_chat(user_input)
-            st.write(reply)
-            generate_promotional_audio(reply)
+                else:
+        st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
+        reply = handle_general_chat(user_input)
+        st.write(reply)
+        generate_promotional_audio(prepare_text_for_speech(reply))
+
