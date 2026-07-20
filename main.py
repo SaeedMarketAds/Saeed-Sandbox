@@ -28,7 +28,7 @@ def load_local_coupons():
     except Exception as e:
         return {"error": f"حدث خطأ أثناء محاولة قراءة قاعدة المعرفة: {str(e)}"}
 
-# =========================================================================
+#onse# =========================================================================
 # 💻 الموديل 3: العقل الحواري العام والدعم الفني (Gemini 3.5 Flash)
 # =========================================================================
 def handle_general_chat(user_input: str) -> str:
@@ -46,7 +46,7 @@ def handle_general_chat(user_input: str) -> str:
     return response.text.strip()
 
 # =========================================================================
-# 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي
+# 🧠 الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma-4-26b-a4b-it)
 # =========================================================================
 def process_coupon_with_gemma(user_input: str) -> str:
     coupons_data = load_local_coupons()
@@ -62,6 +62,7 @@ def process_coupon_with_gemma(user_input: str) -> str:
         contents=prompt
     )
     return response.text
+.text
 
         )
         
