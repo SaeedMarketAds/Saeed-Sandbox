@@ -9,22 +9,38 @@ import edge_tts
 import edge_tts
 
 # --- دالة تجهيز وتنظيف النص للنطق الصوتي ---
+import re
+
 def prepare_text_for_speech(text: str) -> str:
-    replacements = {
-        "Saeed LogiC Pro": "سعيد لوجيك برو",
-        "Saeed LogiC": "سعيد لوجيك",
-        "Saeed MarketAds": "سعيد ماركت أدس",
-        "MarketAds": "ماركت أدس",
-        "Pro": "برو",
-        "SHEIN": "شي إن",
-        "AliExpress": "علي إكسبريس",
-        "Noon": "نون",
-    }
-    for eng_word, ara_word in replacements.items():
-        text = text.replace(eng_word, ara_word)
-    
-    text = re.sub(r'[*#_~`>\[\]\(\)]', '', text)
+    # قائمة الاستبدالات مع التشكيل الصوتي الدقيق واستخدام Regex لتجاهل حالة الأحرف
+    replacements = [
+        (r'\bSaeed\s+LogiC\s+Pro\b', 'سَعِيد لُوجِيك بْرُو'),
+        (r'\bSaeed\s+Logic\s+Pro\b', 'سَعِيد لُوجِيك بْرُو'),
+        (r'\bSaeed\s+LogiC\b', 'سَعِيد لُوجِيك'),
+        (r'\bSaeed\s+Logic\b', 'سَعِيد لُوجِيك'),
+        (r'\bSaeed\s+MarketAds\b', 'سَعِيد مَارْكِت أَدْس'),
+        (r'\bSaeed\b', 'سَعِيد'),
+        (r'\bMarketAds\b', 'مَارْكِت أَدْس'),
+        (r'\bPro\b', 'بْرُو'),
+        (r'\bSHEIN\b', 'شِي إن'),
+        (r'\bAliExpress\b', 'عَلِي إكْسِبْرِيس'),
+        (r'\bNoon\b', 'نُون'),
+        (r'\bSAED\b', 'سَعِيد'),
+        # ضبط تشكيل الكلمات العربية التي يتلعثم فيها القارئ
+        (r'\bأهلاً\b', 'أَهْلًا'),
+        (r'\bاهلاً\b', 'أَهْلًا'),
+    ]
+
+    # تطبيق الاستبدال بغض النظر عن كون الحروف كبيرة أو صغيرة (IGNORECASE)
+    for pattern, replacement in replacements:
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+
+    # إزالة الرموز والأقواس والتنسيقات التي تربك المحرك الصوتي
+    text = re.sub(r'[*#_~`>\[\]\(\)]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+
     return text
+
 
 # 1. إعداد واجهة وتصميم التطبيق
 
