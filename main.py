@@ -1,4 +1,3 @@
-
 import json
 import os
 import re
@@ -12,6 +11,9 @@ from google import genai
 from google.genai import types
 import edge_tts
 from moviepy.editor import AudioFileClip, ImageClip
+from app_utils import generate_image_safe
+
+
 
 
 # =========================================================
