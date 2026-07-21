@@ -25,6 +25,7 @@ def fix_arabic(text):
     return get_display(reshaped_text)
 
 # --- دالة إنشاء تصميم Gemini الاحترافي ---
+# --- دالة إنشاء تصميم Gemini الاحترافي ---
 def create_gemini_style_arabic_design():
     W, H = 1080, 1920
     base = Image.new("RGBA", (W, H), (15, 23, 42, 255))
@@ -62,12 +63,13 @@ def create_gemini_style_arabic_design():
     draw = ImageDraw.Draw(base)
     right_x = 940
     
+    # تمت إزالة direction='rtl' لضمان التوافق التام مع Streamlit Cloud
     badge_text = fix_arabic("إصدار محدود 2026")
     draw.rounded_rectangle([right_x - 220, 260, right_x, 310], radius=12, fill=(99, 102, 241, 230))
-    draw.text((right_x - 18, 272), badge_text, font=badge_font, fill="white", direction='rtl')
+    draw.text((right_x - 200, 272), badge_text, font=badge_font, fill="white")
     
-    draw.text((right_x, 360), fix_arabic("سماعات الذكاء الاصطناعي"), font=title_font, fill="white", direction='rtl')
-    draw.text((right_x, 460), fix_arabic("تجربة صوتية ثورية تدمج الفن بالتكنولوجيا"), font=sub_font, fill=(226, 232, 240), direction='rtl')
+    draw.text((right_x - 550, 360), fix_arabic("سماعات الذكاء الاصطناعي"), font=title_font, fill="white")
+    draw.text((right_x - 620, 460), fix_arabic("تجربة صوتية ثورية تدمج الفن بالتكنولوجيا"), font=sub_font, fill=(226, 232, 240))
     
     btn_w = 300
     btn_rect = [(W - btn_w) // 2, 1150, (W + btn_w) // 2, 1230]
@@ -76,10 +78,6 @@ def create_gemini_style_arabic_design():
     
     return base.convert("RGB")
 
-try:
-    from moviepy.editor import AudioFileClip, ImageClip
-except ImportError:
-    from moviepy import AudioFileClip, ImageClip
 
 # استدعاء تصميم Gemini الاحترافي
 img = create_gemini_style_arabic_design()
