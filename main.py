@@ -235,13 +235,13 @@ def generate_promotional_audio(text_script: str, output_path: str = "promo_voice
 
 
 # =========================================================
-# --- دالة توليد الصور الآمنة باستخدام Imagen ---
+# 6. دالة توليد الصور الآمنة باستخدام Imagen
 # =========================================================
-def generate_image_safe(prompt):
+def generate_image(prompt):
     try:
-        # استدعاء نموذج Imagen عبر المكتبة الرسمية
-        response = client.models.generate_images(
-            model='imagen-3.0-generate-002',
+        # استخدام client_imagen بدلاً من client لأنه المتغير الذي عرفته في الأعلى
+        response = client_imagen.models.generate_images(
+            model=IMAGEN_MODEL_NAME,
             prompt=prompt,
             config=dict(
                 number_of_images=1,
@@ -257,7 +257,8 @@ def generate_image_safe(prompt):
             return image_path
             
     except Exception as e:
-        return f"عذراً! حدث خطأ أثناء توليد الصورة: {str(e)}"
+        st.error(f"عذراً! حدث خطأ أثناء توليد الصورة: {str(e)}")
+        return None
 
 
 # =========================================================
