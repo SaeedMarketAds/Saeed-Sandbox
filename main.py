@@ -1,39 +1,47 @@
+
 import json
 import os
 import re
+import io
+import time
 import asyncio
+import requests
 import streamlit as st
+from PIL import Image
 from google import genai
 from google.genai import types
 import edge_tts
-from moviepy.editor import AudioFileClip, ImageClip  # 👈 يُضاف هنا في الأعلى
+from moviepy.editor import AudioFileClip, ImageClip
 
 
 # =========================================================
 # 🔑 مفاتيح وإعدادات نماذج سعيد لوجيك (Saeed LogiC)
 # =========================================================
 
-# اسم النموذج الرئيسي المعتمد للحوار
+# أسماء النماذج الرئيسية المعتمدة
 MODEL_NAME = "gemini-2.5-flash"
+IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
+VEO_MODEL_NAME = "veo-2.0-generate-001"
 
-# قراءة المفاتيح من Streamlit Secrets بنفس الأسماء الموحدة
+# قراءة المفاتيح من Streamlit Secrets
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 AUDIO_API_KEY = st.secrets.get("AUDIO_API_KEY", "")
 BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "")
 
-# تهيئة العميل الرئيسي (وفي حال فارغ المفتاح الأول يستعين بالاحتياطي تلقائياً)
+# تهيئة العملاء الرسميين
 active_key = GEMINI_API_KEY or BACKUP_API_KEY
 client_main = genai.Client(api_key=active_key)
 client_audio = genai.Client(api_key=AUDIO_API_KEY or active_key)
 
+
 # --- دالة تجهيز وتنظيف النص للنطق الصوتي ---
 def prepare_text_for_speech(text: str) -> str:
     replacements = [
-        # 1. ضبط لفظ الجلالة (الله) بالتشكيل الصحيح حتى ينطقه القارئ بفصاحة
+        # 1. ضبط لفظ الجلالة (الله) بالتشكيل الصحيح
         (r'\bورحمة الله\b', 'وَرَحْمَةُ اللَّهِ'),
         (r'\bالله\b', 'اللَّهِ'),
         
-        # 2. حذف كلمة "يا فندم" و "فندم" تماماً من الصوت
+        # 2. حذف كلمة "يا فندم" و "فندم"
         (r'\bيا\s+فندم\b', ''),
         (r'\bفندم\b', ''),
         
@@ -50,30 +58,37 @@ def prepare_text_for_speech(text: str) -> str:
         (r'\bAliExpress\b', 'عَلِي إكْسِبْرِيس'),
         (r'\bNoon\b', 'نُون'),
         (r'\bSAED\b', 'سَعِيد'),
-        
-        # 4. ضبط الكلمات العربية
         (r'\bأهلاً\b', 'أَهْلًا'),
         (r'\bاهلاً\b', 'أَهْلًا'),
     ]
 
-    # تطبيق التبديل بغض النظر عن حالة الأحرف
     for pattern, replacement in replacements:
         text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
 
-    # إزالة الرموز والأقواس وتنظيف المسافات
     text = re.sub(r'[*#_~`>\[\]\(\)]', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
-
     return text
 
 
+def clean_text_for_speech(text: str) -> str:
+    text = re.sub(r'\*+', '', text)
+    text = re.sub(r'\[.*?\]', '', text)
+    text = re.sub(r'\(.*?\)', '', text)
+    text = re.sub(r'#+', '', text)
+    return text.strip()
+
+
+# =========================================================
 # 1. إعداد واجهة وتصميم التطبيق
+# =========================================================
 st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="centered")
 st.title("Saeed LogiC Pro 🚀")
-st.subheader("النظام التفاعلي الموحد لإدارة العروض والتسويق")
+st.subheader("النظام التفاعلي الموحد لإدارة العروض والصوت والصور والفيديو والموسيقى")
 
 
-# 2. دالة قراءة قاعدة البيانات المحلية (تدعم المسارين)
+# =========================================================
+# 2. دالة قراءة قاعدة البيانات المحلية
+# =========================================================
 def load_local_coupons():
     file_paths = ["knowledge.json", "data/knowledge.json"]
     for path in file_paths:
@@ -86,7 +101,9 @@ def load_local_coupons():
     return {"error": "لم يتم العثور على ملف قاعدة المعرفة knowledge.json"}
 
 
-# 3. الموديل 1: العقل الحواري العام والدعم الفني (Gemini 2.5 Flash)
+# =========================================================
+# 3. الموديل 1: العقل الحواري العام والدعم الفني
+# =========================================================
 def handle_general_chat(user_input: str) -> str:
     prompt = (
         f"أنت (Saeed LogiC Pro)، مساعد التسوق الذكي واللبق والمطور خصيصاً "
@@ -105,7 +122,9 @@ def handle_general_chat(user_input: str) -> str:
         return f"عذراً، تعذر الاتصال بمساعد الحوار حالياً. التفاصيل: {str(e)}"
 
 
-# 4. الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B)
+# =========================================================
+# 4. الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma)
+# =========================================================
 def process_coupon_with_gemma(user_input: str) -> str:
     coupons_data = load_local_coupons()
     prompt = (
@@ -124,49 +143,169 @@ def process_coupon_with_gemma(user_input: str) -> str:
         return f"عذراً، تعذر جلب معلومات الكوبون. التفاصيل: {str(e)}"
 
 
-# 5. صانع التعليق الصوتي الواقعي وتنظيف النصوص
-def clean_text_for_speech(text: str) -> str:
-    text = re.sub(r'\*+', '', text)
-    text = re.sub(r'\[.*?\]', '', text)
-    text = re.sub(r'\(.*?\)', '', text)
-    text = re.sub(r'#+', '', text)
-    return text.strip()
-
+# =========================================================
+# 5. صانع التعليق الصوتي والموسيقى
+# =========================================================
 async def _text_to_speech_async(text: str, output_path: str):
     voice = "ar-SA-HamedNeural"
     clean_text = clean_text_for_speech(text)
     communicate = edge_tts.Communicate(clean_text, voice)
     await communicate.save(output_path)
 
-def generate_promotional_audio(text_script: str):
+def generate_promotional_audio(text_script: str, output_path: str = "promo_voice.mp3") -> str:
     try:
-        audio_file_path = "promo_voice.mp3"
-        asyncio.run(_text_to_speech_async(text_script, audio_file_path))
-
-        with open(audio_file_path, "rb") as f:
+        asyncio.run(_text_to_speech_async(text_script, output_path))
+        with open(output_path, "rb") as f:
             st.audio(f.read(), format="audio/mp3")
-
-        st.success("تم توليد التعليق الصوتي الواقعي بنجاح! 🎙")
+        st.success("تم توليد التعليق الصوتي بنجاح! 🎙")
+        return output_path
     except Exception as e:
         st.error(f"عذراً يا غالي، واجه وكيل الصوت مشكلة: {str(e)}")
+        return None
 
 
-# 6. توجيه الطلبات
+# =========================================================
+# 6. وكيل توليد الصور الذكية (Imagen 3)
+# =========================================================
+def generate_image(prompt_text: str, save_path: str = "generated_image.png") -> str:
+    try:
+        st.info("🎨 جاري توليد الصورة باستخدام Imagen...")
+        enhanced_prompt = f"Professional commercial product advertisement banner for {prompt_text}, high quality, vibrant colors, photorealistic, 8k resolution"
+        
+        response = client_main.models.generate_images(
+            model=IMAGEN_MODEL_NAME,
+            prompt=enhanced_prompt,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                output_mime_type="image/png",
+                aspect_ratio="1:1"
+            )
+        )
+        
+        if response.generated_images:
+            image_bytes = response.generated_images[0].image.image_bytes
+            image = Image.open(io.BytesIO(image_bytes))
+            image.save(save_path)
+            st.image(image, caption="🖼️ الصورة المنشأة بنجاح", use_container_width=True)
+            st.success("تم توليد الصورة التسويقية بنجاح! 🎨")
+            return save_path
+        else:
+            st.error("لم يتم استرجاع صورة من النموذج.")
+            return None
+    except Exception as e:
+        st.error(f"عذراً، حدث خطأ أثناء توليد الصورة: {str(e)}")
+        return None
+
+
+# =========================================================
+# 7. وكيل توليد الموسيقى والألحان
+# =========================================================
+def generate_music_track(prompt_text: str, output_path: str = "promo_music.mp3") -> str:
+    try:
+        st.info("🎵 جاري إنشاء الموسيقى والنغمة التسويقية...")
+        music_description = handle_general_chat(f"وصف موسيقي تسويقي حماسي وجذاب يناسب: {prompt_text}")
+        st.write(f"**طابع الموسيقى:** {music_description}")
+        
+        speech_text = prepare_text_for_speech(f"موسيقى Saeed MarketAds. {music_description}")
+        audio_file = generate_promotional_audio(speech_text, output_path=output_path)
+        return audio_file
+    except Exception as e:
+        st.error(f"حدث خطأ أثناء توليد الموسيقى: {str(e)}")
+        return None
+
+
+# =========================================================
+# 8. صانع مقاطع الفيديو القصيرة (Veo / MoviePy Engine)
+# =========================================================
+def generate_promo_video(audio_path: str, image_path: str = "generated_image.png", output_path: str = "promo_video.mp4"):
+    try:
+        if not os.path.exists(image_path):
+            os.makedirs("assets", exist_ok=True)
+            fallback_path = "assets/default_placeholder.png"
+            if not os.path.exists(fallback_path):
+                url = "https://via.placeholder.com/800x800.png?text=Saeed+MarketAds"
+                response = requests.get(url, timeout=10)
+                with open(fallback_path, "wb") as f:
+                    f.write(response.content)
+            image_path = fallback_path
+
+        voice_clip = AudioFileClip(audio_path)
+        video_clip = ImageClip(image_path).set_duration(voice_clip.duration)
+        video_clip = video_clip.set_audio(voice_clip)
+        video_clip.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac")
+
+        voice_clip.close()
+        video_clip.close()
+        return output_path
+    except Exception as e:
+        st.error(f"حدث خطأ أثناء إنتاج الفيديو: {str(e)}")
+        return None
+
+def generate_short_video_agent(prompt_text: str):
+    st.info("🎬 جاري معالجة وتوليد الفيديو القصير...")
+    
+    # 1. محاولة التوليد المباشر عبر نموذج Veo
+    try:
+        operation = client_main.models.generate_videos(
+            model=VEO_MODEL_NAME,
+            prompt=prompt_text,
+            config=types.GenerateVideosConfig(aspect_ratio="9:16")
+        )
+        
+        with st.spinner("جاري بناء إطارات الفيديو المباشر..."):
+            while not operation.done:
+                time.sleep(5)
+                operation = client_main.operations.get(operation)
+        
+        if operation.response and operation.response.generated_videos:
+            video_uri = operation.response.generated_videos[0].video.uri
+            st.video(video_uri)
+            st.success("تم توليد الفيديو بنجاح عبر Veo! 🎬")
+            return
+    except Exception:
+        st.caption("ℹ️ الانتقال لنظام الإنتاج المتكامل (صورة تسويقية + صوت مدمج)...")
+
+    # 2. النظام التجميعي الآلي للمقاطع القصيرة (صورة + صوت مدمج في فيديو MP4)
+    img_path = generate_image(f"إعلان تسويقي حماسي لـ {prompt_text}")
+    script_text = handle_general_chat(f"اكتب سكريبت إعلاني قصير جداً وتنسيقي حماسي بناءً على: {prompt_text}")
+    speech_text = prepare_text_for_speech(script_text)
+    audio_path = generate_promotional_audio(speech_text, output_path="temp_vid_audio.mp3")
+
+    if audio_path:
+        video_file = generate_promo_video(audio_path=audio_path, image_path=img_path or "assets/logo.png")
+        if video_file and os.path.exists(video_file):
+            with open(video_file, "rb") as vf:
+                st.video(vf.read())
+            st.success("تم إنتاج وتجميع الفيديو القصير بنجاح! 🎬")
+
+
+# =========================================================
+# 9. موجّه الطلبات (Smart Router)
+# =========================================================
 def route_user_request(user_input: str) -> str:
     lowered = user_input.lower()
-    if any(w in lowered for w in ["كوبون", "خصم", "كود", "عروض", "عرض"]):
+    if any(w in lowered for w in ["صورة", "صور", "توليد صورة", "رسم", "تصميم صورة", "صمم"]):
+        return "image_gen"
+    elif any(w in lowered for w in ["فيديو", "فيديو قصير", "مقطع فيديو", "صنع فيديو", "انيميشن"]):
+        return "video_gen"
+    elif any(w in lowered for w in ["موسيقى", "لحن", "موسيقى خلفية", "صوت موسيقي", "أغنية"]):
+        return "music_gen"
+    elif any(w in lowered for w in ["كوبون", "خصم", "كود", "عروض", "عرض"]):
         return "coupon"
     elif any(w in lowered for w in ["صوت", "سكربت", "تيك توك", "إعلان"]):
         return "voice_script"
     return "general"
 
 
-# 7. واجهة المستخدم والتفاعل
+# =========================================================
+# 10. واجهة المستخدم والتفاعل والأزرار السريعة
+# =========================================================
 if "quick_action" not in st.session_state:
     st.session_state.quick_action = None
 
 st.markdown("<p style='text-align: right; margin-bottom: 5px; color: #888;'>⚡ اختصارات سريعة:</p>", unsafe_allow_html=True)
 
+# الصف الأول من الاختصارات
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -184,14 +323,30 @@ with col1:
             st.warning("لا توجد عروض مسجلة حالياً.")
 
 with col2:
-    if st.button("🔥 جملة تسويقية", use_container_width=True, key="btn_main_marketing"):
-        st.info("💡 اختر المتجر المطلوب للحصول على النص التسويقي المخصص.")
+    if st.button("🎨 توليد صورة", use_container_width=True, key="btn_main_img"):
+        st.session_state.quick_action = "صمم صورة إعلانية مبتكرة لعروض التخفيضات"
 
 with col3:
     if st.button("🎙️ سكريبت صوتي", use_container_width=True, key="btn_main_script"):
-        st.info("🎙️ جاهز لتوليد السكريبت الصوتي للترويج للعروض.")
+        st.session_state.quick_action = "اكتب سكريبت صوتي حماسي لمنتجات شين"
 
-chat_input_val = st.chat_input("اسأل Saeed LogiC عن العروض أو اطلب سكربت...")
+# الصف الثاني من الاختصارات
+col4, col5, col6 = st.columns(3)
+
+with col4:
+    if st.button("🎬 فيديو قصير", use_container_width=True, key="btn_main_vid"):
+        st.session_state.quick_action = "أنشئ فيديو قصير لإعلان خصومات نون"
+
+with col5:
+    if st.button("🎵 موسيقى خلفية", use_container_width=True, key="btn_main_music"):
+        st.session_state.quick_action = "ولّد موسيقى خلفية حماسية للتسوق"
+
+with col6:
+    if st.button("🔥 جملة تسويقية", use_container_width=True, key="btn_main_marketing"):
+        st.session_state.quick_action = "اكتب جملة تسويقية مميزة لمتجر علي اكسبريس"
+
+
+chat_input_val = st.chat_input("اسأل Saeed LogiC عن العروض، أو اطلب صورة، فيديو، موسيقى، سكريبت...")
 
 user_input = None
 if chat_input_val:
@@ -208,22 +363,29 @@ if user_input:
         selected_agent = route_user_request(user_input)
         
     with st.chat_message("assistant"):
-        if "coupon" in selected_agent:
+        if selected_agent == "coupon":
             st.markdown("**[وكيل البيانات: Gemma 4]**")
             reply = process_coupon_with_gemma(user_input)
             st.write(reply)
-        elif "voice_script" in selected_agent:
+        elif selected_agent == "voice_script":
             st.markdown("**[وكيل الصوت: Gemini]**")
             raw_script = handle_general_chat(f"اكتب سكريبت إعلاني قصير جداً وتنسيقي حماسي بناءً على: {user_input}")
-            
-            # تجهيز النص العربي الفصيح وتعديل الأسماء قبل النطق
             speech_text = prepare_text_for_speech(raw_script)
             st.write(raw_script)
-            
-            # توليد الصوت بالنص المجهز والمنظف
             generate_promotional_audio(speech_text)
+        elif selected_agent == "image_gen":
+            st.markdown("**[وكيل الصور: Imagen 3]**")
+            generate_image(user_input)
+        elif selected_agent == "music_gen":
+            st.markdown("**[وكيل الموسيقى: Saeed Audio Agent]**")
+            generate_music_track(user_input)
+        elif selected_agent == "video_gen":
+            st.markdown("**[وكيل الفيديو: Veo / MoviePy Agent]**")
+            generate_short_video_agent(user_input)
         else:
             st.markdown("**[مساعد الحوار: Gemini 2.5 Flash]**")
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(prepare_text_for_speech(reply))
+
+```
