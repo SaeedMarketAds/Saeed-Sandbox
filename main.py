@@ -6,11 +6,25 @@ import streamlit as st
 from google import genai
 from google.genai import types
 import edge_tts
-import edge_tts
+
+# =========================================================
+# 🔑 مفاتيح وإعدادات نماذج سعيد لوجيك (Saeed LogiC)
+# =========================================================
+
+# اسم النموذج الرئيسي المعتمد للحوار
+MODEL_NAME = "gemini-2.5-flash"
+
+# قراءة المفاتيح من Streamlit Secrets بنفس الأسماء الموحدة
+GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
+AUDIO_API_KEY = st.secrets.get("AUDIO_API_KEY", "")
+BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "")
+
+# تهيئة العميل الرئيسي (وفي حال فارغ المفتاح الأول يستعين بالاحتياطي تلقائياً)
+active_key = GEMINI_API_KEY or BACKUP_API_KEY
+client_main = genai.Client(api_key=active_key)
+client_audio = genai.Client(api_key=AUDIO_API_KEY or active_key)
 
 # --- دالة تجهيز وتنظيف النص للنطق الصوتي ---
-import re
-
 def prepare_text_for_speech(text: str) -> str:
     replacements = [
         # 1. ضبط لفظ الجلالة (الله) بالتشكيل الصحيح حتى ينطقه القارئ بفصاحة
@@ -52,30 +66,25 @@ def prepare_text_for_speech(text: str) -> str:
 
 
 # 1. إعداد واجهة وتصميم التطبيق
-
-# 1. إعداد واجهة وتصميم التطبيق
 st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="centered")
 st.title("Saeed LogiC Pro 🚀")
 st.subheader("النظام التفاعلي الموحد لإدارة العروض والتسويق")
 
-# 2. تهيئة عملاء الذكاء الاصطناعي بالمفاتيح
-try:
-    client_main = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-    client_audio = genai.Client(api_key=st.secrets["AUDIO_API_KEY"])
-except Exception as e:
-    st.error("❌ حدث خطأ في قراءة المفاتيح من صندوق الأسرار (Secrets)!")
-    st.info("تأكد من كتابة GEMINI_API_KEY و AUDIO_API_KEY بشكل صحيح داخل الإعدادات.")
-    st.stop()
 
-# 3. دالة قراءة قاعدة البيانات المحلية
+# 2. دالة قراءة قاعدة البيانات المحلية (تدعم المسارين)
 def load_local_coupons():
-    try:
-        with open("knowledge.json", "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        return {"error": f"حدث خطأ أثناء محاولة قراءة قاعدة المعرفة: {str(e)}"}
+    file_paths = ["knowledge.json", "data/knowledge.json"]
+    for path in file_paths:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception as e:
+                return {"error": f"حدث خطأ أثناء محاولة قراءة قاعدة المعرفة: {str(e)}"}
+    return {"error": "لم يتم العثور على ملف قاعدة المعرفة knowledge.json"}
 
-# 4. الموديل 1: العقل الحواري العام والدعم الفني (Gemini 3.5 Flash)
+
+# 3. الموديل 1: العقل الحواري العام والدعم الفني (Gemini 2.5 Flash)
 def handle_general_chat(user_input: str) -> str:
     prompt = (
         f"أنت (Saeed LogiC Pro)، مساعد التسوق الذكي واللبق والمطور خصيصاً "
@@ -84,18 +93,17 @@ def handle_general_chat(user_input: str) -> str:
         f"تذكر دائماً هويتك كمساعد تسوق واعتزازك بكونك مدعوماً من Saeed MarketAds لإدارة أقوى الكوبونات.\n"
         f"الطلب: {user_input}"
     )
-def handle_general_chat(user_input: str) -> str:
     try:
         response = client_main.models.generate_content(
-            model=MODEL_NAME,  # يمرر "gemini-2.5-flash" تلقائياً
-            contents=user_input
+            model=MODEL_NAME,
+            contents=prompt
         )
         return response.text
     except Exception as e:
         return f"عذراً، تعذر الاتصال بمساعد الحوار حالياً. التفاصيل: {str(e)}"
 
 
-# 5. الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B)
+# 4. الموديل 2: مهندس البيانات والمنطق البرمجي (Gemma 4 26B)
 def process_coupon_with_gemma(user_input: str) -> str:
     coupons_data = load_local_coupons()
     prompt = (
@@ -104,20 +112,21 @@ def process_coupon_with_gemma(user_input: str) -> str:
         f"استخرج كود الخصم الدقيق وتفاصيله للرد على طلب العميل: {user_input}.\n"
         f"إذا لم تجد كوداً مناسباً، قل باختصار ولباقة: (لم أجد كوبوناً متاحاً لهذا الطلب حالياً)."
     )
-    response = client_main.models.generate_content(
-        model='gemma-4-26b-a4b-it',
-        contents=prompt
-    )
-    return response.text.strip()
+    try:
+        response = client_main.models.generate_content(
+            model='gemma-4-26b-a4b-it',
+            contents=prompt
+        )
+        return response.text.strip()
+    except Exception as e:
+        return f"عذراً، تعذر جلب معلومات الكوبون. التفاصيل: {str(e)}"
 
-# 6. صانع التعليق الصوتي الواقعي وتنظيف النصوص
+
+# 5. صانع التعليق الصوتي الواقعي وتنظيف النصوص
 def clean_text_for_speech(text: str) -> str:
-    # إزالة كافة النجوم ورموز التنسيق (Markdown)
     text = re.sub(r'\*+', '', text)
-    # إزالة التوجيهات البصرية بين أقواس مثل [المشهد البصري] أو [0:12]
     text = re.sub(r'\[.*?\]', '', text)
     text = re.sub(r'\(.*?\)', '', text)
-    # إزالة الهاشتاجات والرموز الزائدة
     text = re.sub(r'#+', '', text)
     return text.strip()
 
@@ -139,7 +148,8 @@ def generate_promotional_audio(text_script: str):
     except Exception as e:
         st.error(f"عذراً يا غالي، واجه وكيل الصوت مشكلة: {str(e)}")
 
-# 7. توجيه الطلبات
+
+# 6. توجيه الطلبات
 def route_user_request(user_input: str) -> str:
     lowered = user_input.lower()
     if any(w in lowered for w in ["كوبون", "خصم", "كود", "عروض", "عرض"]):
@@ -148,33 +158,28 @@ def route_user_request(user_input: str) -> str:
         return "voice_script"
     return "general"
 
-# 8. واجهة المستخدم والتفاعل
+
+# 7. واجهة المستخدم والتفاعل
 if "quick_action" not in st.session_state:
     st.session_state.quick_action = None
 
 st.markdown("<p style='text-align: right; margin-bottom: 5px; color: #888;'>⚡ اختصارات سريعة:</p>", unsafe_allow_html=True)
-import json
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("📋 العروض الكبرى", use_container_width=True, key="btn_main_offers"):
-        try:
-            with open("data/knowledge.json", "r", encoding="utf-8") as f:
-                knowledge_data = json.load(f)
-            
-            coupons = knowledge_data.get("coupons", [])
-            if coupons:
-                st.success("🎉 إليك أحدث العروض والكوبونات المتاحة:")
-                for item in coupons:
-                    st.markdown(f"### 🏷️ {item.get('store')}")
-                    st.code(item.get('code'), language="text")
-                    st.write(f"**الوصف:** {item.get('description')}")
-                    st.divider()
-            else:
-                st.warning("لا توجد عروض مسجلة حالياً.")
-        except Exception as e:
-            st.error(f"تعذر قراءة قاعدة البيانات: {e}")
+        knowledge_data = load_local_coupons()
+        coupons = knowledge_data.get("coupons", [])
+        if coupons:
+            st.success("🎉 إليك أحدث العروض والكوبونات المتاحة:")
+            for item in coupons:
+                st.markdown(f"### 🏷️ {item.get('store')}")
+                st.code(item.get('code'), language="text")
+                st.write(f"**الوصف:** {item.get('description')}")
+                st.divider()
+        else:
+            st.warning("لا توجد عروض مسجلة حالياً.")
 
 with col2:
     if st.button("🔥 جملة تسويقية", use_container_width=True, key="btn_main_marketing"):
@@ -206,17 +211,17 @@ if user_input:
             reply = process_coupon_with_gemma(user_input)
             st.write(reply)
         elif "voice_script" in selected_agent:
-            st.markdown("**[وكيل الصوت: Gemini الصوت]**")
+            st.markdown("**[وكيل الصوت: Gemini]**")
             raw_script = handle_general_chat(f"اكتب سكريبت إعلاني قصير جداً وتنسيقي حماسي بناءً على: {user_input}")
             
-            # 1. تجهيز النص العربي الفصيح وتعديل الأسماء قبل النطق
+            # تجهيز النص العربي الفصيح وتعديل الأسماء قبل النطق
             speech_text = prepare_text_for_speech(raw_script)
             st.write(raw_script)
             
-            # 2. توليد الصوت بالنص المجهز والمنظف
+            # توليد الصوت بالنص المجهز والمنظف
             generate_promotional_audio(speech_text)
         else:
-            st.markdown("**[مساعد الحوار: Gemini 3.5 Flash]**")
+            st.markdown("**[مساعد الحوار: Gemini 2.5 Flash]**")
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(prepare_text_for_speech(reply))
