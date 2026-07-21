@@ -13,7 +13,13 @@ from PIL import Image
 from google import genai
 from google.genai import types
 import edge_tts
-from moviepy.editor import AudioFileClip, ImageClip
+
+# 👇 ضع الكود هنا بالتحديد (بعد edge_tts وقبل app_utils) 👇
+try:
+    from moviepy.editor import AudioFileClip, ImageClip
+except ImportError:
+    from moviepy import AudioFileClip, ImageClip
+
 from app_utils import generate_image_safe
 
 
