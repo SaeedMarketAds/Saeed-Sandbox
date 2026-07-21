@@ -19,8 +19,8 @@ try:
     from moviepy.editor import AudioFileClip, ImageClip
 except ImportError:
     from moviepy import AudioFileClip, ImageClip
+img = get_placeholder_image("Saeed MarketAds")
 
-from app_utils import generate_image_safe
 
 
 
