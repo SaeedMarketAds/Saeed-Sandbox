@@ -84,15 +84,14 @@ def handle_general_chat(user_input: str) -> str:
         f"تذكر دائماً هويتك كمساعد تسوق واعتزازك بكونك مدعوماً من Saeed MarketAds لإدارة أقوى الكوبونات.\n"
         f"الطلب: {user_input}"
     )
-    def handle_general_chat(user_input: str) -> str:
+def handle_general_chat(user_input: str) -> str:
     try:
         response = client_main.models.generate_content(
-            model="gemini-2.5-flash",  # استخدم اسم موديل معتمد ورسمي
+            model=MODEL_NAME,  # يمرر "gemini-2.5-flash" تلقائياً
             contents=user_input
         )
         return response.text
     except Exception as e:
-        # إرجاع نص عربي بدلاً من انهيار التطبيق بالشاشة الحمراء
         return f"عذراً، تعذر الاتصال بمساعد الحوار حالياً. التفاصيل: {str(e)}"
 
 
