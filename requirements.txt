@@ -6,3 +6,4 @@ Pillow>=10.0.0
 python-telegram-bot
 requests
 streamlit
+moviepy>=2.0.0
