@@ -235,32 +235,29 @@ def generate_promotional_audio(text_script: str, output_path: str = "promo_voice
 
 
 # =========================================================
-# 6. وكيل توليد الصور الذكية (Imagen 3)
+# --- دالة توليد الصور الآمنة باستخدام Imagen ---
 # =========================================================
-def generate_image(prompt_text: str, save_path: str = "generated_image.png") -> str:
-    st.info("🎨 جاري توليد الصورة باستخدام Imagen...")
-    enhanced_prompt = f"Professional commercial product advertisement banner for {prompt_text}, high quality, vibrant"
-    
-    result = generate_image_safe(enhanced_prompt)
-    if isinstance(result, str) and result.startswith("عذراً"):
-        st.error(result)
-        return None
-    
-    # في حال استرجاع كائن الصورة بنجاح
+def generate_image_safe(prompt):
     try:
-        if hasattr(result, 'generated_images') and result.generated_images:
-            image_bytes = result.generated_images[0].image.image_bytes
-            image = Image.open(io.BytesIO(image_bytes))
-            image.save(save_path)
-            st.image(image, caption="📸 الصورة المنشأة بنجاح", use_container_width=True)
-            st.success("✨ تم توليد الصورة أوتوماتيكياً بنجاح!")
-            return save_path
-        else:
-            st.error("لم يتم استرجاع صورة من النموذج.")
-            return None
+        # استدعاء نموذج Imagen عبر المكتبة الرسمية
+        response = client.models.generate_images(
+            model='imagen-3.0-generate-002',
+            prompt=prompt,
+            config=dict(
+                number_of_images=1,
+                output_mime_type="image/jpeg",
+                aspect_ratio="1:1"
+            )
+        )
+        # حفظ الصورة الموَلّدة
+        for generated_image in response.generated_images:
+            image_path = "generated_output.png"
+            image = Image.open(io.BytesIO(generated_image.image.image_bytes))
+            image.save(image_path)
+            return image_path
+            
     except Exception as e:
-        st.error(f"حدث خطأ أثناء معالجة الصورة: {e}")
-        return None
+        return f"عذراً! حدث خطأ أثناء توليد الصورة: {str(e)}"
 
 
 # =========================================================
