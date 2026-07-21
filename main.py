@@ -14,22 +14,80 @@ from google import genai
 from google.genai import types
 import edge_tts
 
-# 👇 ضع الكود هنا بالتحديد (بعد edge_tts وقبل app_utils) 👇
+import edge_tts
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+import arabic_reshaper
+from bidi.algorithm import get_display
+
+# --- دالة ضبط النص العربي ---
+def fix_arabic(text):
+    reshaped_text = arabic_reshaper.reshape(text)
+    return get_display(reshaped_text)
+
+# --- دالة إنشاء تصميم Gemini الاحترافي ---
+def create_gemini_style_arabic_design():
+    W, H = 1080, 1920
+    base = Image.new("RGBA", (W, H), (15, 23, 42, 255))
+    
+    glow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow_layer)
+    glow_draw.ellipse([50, 100, 750, 800], fill=(99, 102, 241, 150))
+    glow_draw.ellipse([600, 1200, 1150, 1750], fill=(236, 72, 153, 130))
+    glow_draw.ellipse([W//2 - 250, H//2 - 250, W//2 + 250, H//2 + 250], fill=(14, 165, 233, 90))
+    
+    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(100))
+    base = Image.alpha_composite(base, glow_layer)
+    
+    card_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    card_draw = ImageDraw.Draw(card_layer)
+    card_rect = [80, 200, 1000, 1720]
+    card_draw.rounded_rectangle(card_rect, radius=40, fill=(255, 255, 255, 20), outline=(255, 255, 255, 55), width=3)
+    base = Image.alpha_composite(base, card_layer)
+    
+    try:
+        title_font = ImageFont.truetype("Cairo-Bold.ttf", 60)
+        sub_font = ImageFont.truetype("Cairo-Regular.ttf", 32)
+        badge_font = ImageFont.truetype("Cairo-Bold.ttf", 24)
+        button_font = ImageFont.truetype("Cairo-Bold.ttf", 36)
+    except OSError:
+        title_font = sub_font = badge_font = button_font = ImageFont.load_default()
+
+    try:
+        product_img = Image.open("product.png").convert("RGBA")
+        product_img = product_img.resize((500, 500))
+        base.paste(product_img, ((W - 500) // 2, 550), product_img)
+    except FileNotFoundError:
+        pass
+
+    draw = ImageDraw.Draw(base)
+    right_x = 940
+    
+    badge_text = fix_arabic("إصدار محدود 2026")
+    draw.rounded_rectangle([right_x - 220, 260, right_x, 310], radius=12, fill=(99, 102, 241, 230))
+    draw.text((right_x - 18, 272), badge_text, font=badge_font, fill="white", direction='rtl')
+    
+    draw.text((right_x, 360), fix_arabic("سماعات الذكاء الاصطناعي"), font=title_font, fill="white", direction='rtl')
+    draw.text((right_x, 460), fix_arabic("تجربة صوتية ثورية تدمج الفن بالتكنولوجيا"), font=sub_font, fill=(226, 232, 240), direction='rtl')
+    
+    btn_w = 300
+    btn_rect = [(W - btn_w) // 2, 1150, (W + btn_w) // 2, 1230]
+    draw.rounded_rectangle(btn_rect, radius=20, fill=(236, 72, 153, 255))
+    draw.text((btn_rect[0] + 65, 1168), fix_arabic("اطلب الآن"), font=button_font, fill="white")
+    
+    return base.convert("RGB")
+
 try:
     from moviepy.editor import AudioFileClip, ImageClip
 except ImportError:
     from moviepy import AudioFileClip, ImageClip
-img = get_placeholder_image("Saeed MarketAds")
 
-
-
-
+# استدعاء تصميم Gemini الاحترافي
+img = create_gemini_style_arabic_design()
 
 # =========================================================
-# 🔑 مفاتيح وإعدادات نماذج سعيد لوجيك (Saeed LogiC)
+# مفاتيح وإعدادات نموذج سعيد لوجيك (Saeed LogiC)
 # =========================================================
 
-# أسماء النماذج الرئيسية المعتمدة
 MODEL_NAME = "gemini-2.5-flash"
 IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
 VEO_MODEL_NAME = "veo-2.0-generate-001"
@@ -38,11 +96,14 @@ VEO_MODEL_NAME = "veo-2.0-generate-001"
 GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
 AUDIO_API_KEY = st.secrets.get("AUDIO_API_KEY", "")
 BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "")
+IMAGEN_API_KEY = st.secrets.get("IMAGEN_API_KEY", "")
 
 # تهيئة العملاء الرسميين
 active_key = GEMINI_API_KEY or BACKUP_API_KEY
 client_main = genai.Client(api_key=active_key)
 client_audio = genai.Client(api_key=AUDIO_API_KEY or active_key)
+client_imagen = genai.Client(api_key=IMAGEN_API_KEY or active_key)
+
 
 
 # --- دالة تجهيز وتنظيف النص للنطق الصوتي ---
