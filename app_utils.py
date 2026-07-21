@@ -2,6 +2,7 @@ import json
 import os
 import time
 import google.generativeai as genai
+import streamlit as st  # تم إضافتها لقراءة المفاتيح
 
 # ==========================================
 # وظائف التعامل مع ملفات JSON
@@ -49,12 +50,18 @@ def call_agent_with_retry(agent_function, *args, max_retries=3, delay=2, **kwarg
             raise e
 
 def generate_image_safe(prompt):
-    """دالة توليد الصور الآمنة مع معالجة الأخطاء"""
-    def _generate():
-        model = genai.GenerativeModel('imagen-3.0-generate-001')
-        return model.generate_content(prompt)
-    
+    """دالة توليد الصور بأمان باستخدام النموذج المُهيأ"""
     try:
+        # جلب مفتاح الصور من Streamlit Secrets أو استخدام المفتاح الرئيسي كبديل
+        imagen_key = st.secrets.get("IMAGEN_API_KEY") or st.secrets.get("GEMINI_API_KEY")
+        genai.configure(api_key=imagen_key)
+        
+        model = genai.GenerativeModel('imagen-3.0-generate-001')
+        
+        # استدعاء التوليد مع دالة إعادة المحاولة عند الضغط
+        def _generate():
+            return model.generate_content(prompt)
+            
         return call_agent_with_retry(_generate)
     except Exception as e:
         return f"عذراً، تعذر توليد الصورة حالياً: {e}"
