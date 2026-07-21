@@ -168,32 +168,28 @@ def generate_promotional_audio(text_script: str, output_path: str = "promo_voice
 # 6. وكيل توليد الصور الذكية (Imagen 3)
 # =========================================================
 def generate_image(prompt_text: str, save_path: str = "generated_image.png") -> str:
+    st.info("🎨 جاري توليد الصورة باستخدام Imagen...")
+    enhanced_prompt = f"Professional commercial product advertisement banner for {prompt_text}, high quality, vibrant"
+    
+    result = generate_image_safe(enhanced_prompt)
+    if isinstance(result, str) and result.startswith("عذراً"):
+        st.error(result)
+        return None
+    
+    # في حال استرجاع كائن الصورة بنجاح
     try:
-        st.info("🎨 جاري توليد الصورة باستخدام Imagen...")
-        enhanced_prompt = f"Professional commercial product advertisement banner for {prompt_text}, high quality, vibrant colors, photorealistic, 8k resolution"
-        
-        response = client_main.models.generate_images(
-            model=IMAGEN_MODEL_NAME,
-            prompt=enhanced_prompt,
-            config=types.GenerateImagesConfig(
-                number_of_images=1,
-                output_mime_type="image/png",
-                aspect_ratio="1:1"
-            )
-        )
-        
-        if response.generated_images:
-            image_bytes = response.generated_images[0].image.image_bytes
+        if hasattr(result, 'generated_images') and result.generated_images:
+            image_bytes = result.generated_images[0].image.image_bytes
             image = Image.open(io.BytesIO(image_bytes))
             image.save(save_path)
-            st.image(image, caption="🖼️ الصورة المنشأة بنجاح", use_container_width=True)
-            st.success("تم توليد الصورة التسويقية بنجاح! 🎨")
+            st.image(image, caption="📸 الصورة المنشأة بنجاح", use_container_width=True)
+            st.success("✨ تم توليد الصورة أوتوماتيكياً بنجاح!")
             return save_path
         else:
             st.error("لم يتم استرجاع صورة من النموذج.")
             return None
     except Exception as e:
-        st.error(f"عذراً، حدث خطأ أثناء توليد الصورة: {str(e)}")
+        st.error(f"حدث خطأ أثناء معالجة الصورة: {e}")
         return None
 
 
