@@ -1,8 +1,8 @@
-edge-tts
-google-genai
-google-generativeai
-moviepy
-Pillow>=10.0.0
-python-telegram-bot
-requests
 streamlit
+google-genai
+pillow
+arabic-reshaper
+python-bidi
+edge-tts
+moviepy
+requests
