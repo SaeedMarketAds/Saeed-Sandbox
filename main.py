@@ -6,6 +6,8 @@ import streamlit as st
 from google import genai
 from google.genai import types
 import edge_tts
+from moviepy.editor import AudioFileClip, ImageClip  # 👈 يُضاف هنا في الأعلى
+
 
 # =========================================================
 # 🔑 مفاتيح وإعدادات نماذج سعيد لوجيك (Saeed LogiC)
