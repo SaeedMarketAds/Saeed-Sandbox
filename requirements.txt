@@ -1,7 +1,7 @@
 edge-tts
 google-genai
 google-generativeai
-moviepy
+moviepy==1.0.3
 Pillow>=10.0.0
 python-telegram-bot
 requests
