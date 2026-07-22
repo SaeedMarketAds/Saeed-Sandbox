@@ -447,8 +447,12 @@ if user_input:
             st.markdown("**[وكيل الفيديو: Veo / MoviePy Agent]**")
             generate_short_video_agent(user_input)
         else:
-            st.markdown("**[مساعد الحوار: model='gemini-3.1-flash-lite') 
-
+            st.markdown("**[مساعد الحوار: Gemini 3.1 Flash Lite]**")
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(prepare_text_for_speech(reply))
+
+
+
+
+
