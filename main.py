@@ -84,8 +84,8 @@ img = create_gemini_style_arabic_design()
 # مفاتيح وإعدادات نموذج سعيد لوجيك (Saeed LogiC)
 # =========================================================
 
-MODEL_NAME = "gemini-2.5-flash"
-IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
+MODEL_NAME = "gemini-3.1-flash-lite"
+IMAGEN_MODEL_NAME = "imagen-3.0-fast-generate-001"
 VEO_MODEL_NAME = "veo-2.0-generate-001"
 
 # قراءة المفاتيح من Streamlit Secrets
