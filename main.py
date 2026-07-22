@@ -42,7 +42,7 @@ def create_gemini_style_arabic_design():
     card_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     card_draw = ImageDraw.Draw(card_layer)
     base = Image.alpha_composite(base, card_layer)
-    card_draw.rounded_rectangle([80, 200, 1000, 1720], radius=40, fill=(255, 255, 255, 255))
+    card_draw.rounded_rectangle([80, 200, 1000, 1720], radius
     try:
         title_font = ImageFont.truetype("Cairo-Bold.ttf", 60)
         sub_font = ImageFont.truetype("Cairo-Regular.ttf", 32)
