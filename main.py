@@ -287,19 +287,15 @@ def generate_music_track(prompt_text: str, output_path: str = "promo_music.mp3")
 
 
 # =========================================================
-# 8. صانع مقاطع الفيديو القصيرة (Veo / MoviePy Engine)
+# 8. صانع مقاطع الفيديو القصيرة (MoviePy Engine + PIL)
 # =========================================================
-def generate_promo_video(audio_path: str, image_path: str = "generated_image.png", output_path: str = "promo_video.mp4"):
+
+def generate_promo_video(audio_path: str, image_path: str = "generated_output.png", output_path: str = "promo_video.mp4"):
     try:
+        # إذا لم تكن الصورة موجودة، يتم إنشاؤها فوراً محلياً بـ PIL بدون إنترنت
         if not os.path.exists(image_path):
-            os.makedirs("assets", exist_ok=True)
-            fallback_path = "assets/default_placeholder.png"
-            if not os.path.exists(fallback_path):
-                url = "https://via.placeholder.com/800x800.png?text=Saeed+MarketAds"
-                response = requests.get(url, timeout=10)
-                with open(fallback_path, "wb") as f:
-                    f.write(response.content)
-            image_path = fallback_path
+            img = Image.new("RGB", (800, 800), color=(30, 41, 59))
+            img.save(image_path)
 
         voice_clip = AudioFileClip(audio_path)
         video_clip = ImageClip(image_path).set_duration(voice_clip.duration)
@@ -312,6 +308,7 @@ def generate_promo_video(audio_path: str, image_path: str = "generated_image.png
     except Exception as e:
         st.error(f"حدث خطأ أثناء إنتاج الفيديو: {str(e)}")
         return None
+
 
 def generate_short_video_agent(prompt_text: str):
     st.info("🎬 جاري معالجة وتوليد الفيديو القصير...")
