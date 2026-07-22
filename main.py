@@ -9,22 +9,24 @@ import time
 import asyncio
 import requests
 import streamlit as st
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from google import genai
 from google.genai import types
 import edge_tts
-
-import edge_tts
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
 import arabic_reshaper
 from bidi.algorithm import get_display
+
+# استيراد أدوات الفيديو لتجنب خطأ عدم التعرف عليها
+try:
+    from moviepy.editor import AudioFileClip, ImageClip
+except ImportError:
+    pass
 
 # --- دالة ضبط النص العربي ---
 def fix_arabic(text):
     reshaped_text = arabic_reshaper.reshape(text)
     return get_display(reshaped_text)
 
-# --- دالة إنشاء تصميم Gemini الاحترافي ---
 # --- دالة إنشاء تصميم Gemini الاحترافي ---
 def create_gemini_style_arabic_design():
     W, H = 1080, 1920
@@ -46,6 +48,11 @@ def create_gemini_style_arabic_design():
 
     try:
         title_font = ImageFont.truetype("Cairo-Bold.ttf", 60)
+        sub_font = ImageFont.truetype("Cairo-Regular.ttf", 32)
+        badge_font = ImageFont.truetype("Cairo-Bold.ttf", 24)
+        button_font = ImageFont.truetype("Cairo-Bold.ttf", 36)
+    except OSError:
+        title_font = sub_font = badge_font = button_font = ImageFont.load_default()
 
     try:
         product_img = Image.open("product.png").convert("RGBA")
@@ -95,7 +102,6 @@ active_key = GEMINI_API_KEY or BACKUP_API_KEY
 client_main = genai.Client(api_key=active_key)
 client_audio = genai.Client(api_key=AUDIO_API_KEY or active_key)
 client_imagen = genai.Client(api_key=IMAGEN_API_KEY or active_key)
-
 
 
 # --- دالة تجهيز وتنظيف النص للنطق الصوتي ---
@@ -252,7 +258,6 @@ def generate_image(prompt):
     except Exception as e:
         st.error(f"عذراً! تعذر توليد الصورة حالياً: {str(e)}")
         return None
-
 
 
 # =========================================================
@@ -445,8 +450,3 @@ if user_input:
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(prepare_text_for_speech(reply))
-
-
-
-
-
