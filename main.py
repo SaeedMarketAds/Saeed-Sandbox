@@ -237,6 +237,9 @@ def generate_promotional_audio(text_script: str, output_path: str = "promo_voice
 # =========================================================
 # 6. دالة توليد الصور المعتمدة باستخدام Imagen
 # =========================================================
+# تعديل اسم الموديل ليكون المتوافق رسمياً
+IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
+
 def generate_image(prompt):
     try:
         st.info("🎨 جاري توليد الصورة...")
@@ -256,8 +259,14 @@ def generate_image(prompt):
             return image_path
             
     except Exception as e:
-        st.error(f"عذراً! تعذر توليد الصورة حالياً: {str(e)}")
-        return None
+        st.warning("⚠️ تعذر التوليد عبر السحابة، جاري إنشاء صورة إعلانية محلياً...")
+        # إنشاء صورة احتياطية محلياً بدون الحاجة للإنترنت
+        img = Image.new("RGB", (800, 800), color=(15, 23, 42))
+        draw = ImageDraw.Draw(img)
+        draw.text((200, 400), "Saeed MarketAds", fill=(255, 255, 255))
+        fallback_path = "generated_output.png"
+        img.save(fallback_path)
+        return fallback_path
 
 
 # =========================================================
