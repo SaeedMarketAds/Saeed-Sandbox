@@ -38,18 +38,14 @@ def create_gemini_style_arabic_design():
     
     glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(100))
     base = Image.alpha_composite(base, glow_layer)
-        card_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    
+    card_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     card_draw = ImageDraw.Draw(card_layer)
     card_draw.rounded_rectangle([80, 200, 1000, 1720], radius=40, fill=(255, 255, 255, 20), outline=(255, 255, 255, 55), width=3)
     base = Image.alpha_composite(base, card_layer)
 
     try:
         title_font = ImageFont.truetype("Cairo-Bold.ttf", 60)
-        sub_font = ImageFont.truetype("Cairo-Regular.ttf", 32)
-        badge_font = ImageFont.truetype("Cairo-Bold.ttf", 24)
-        button_font = ImageFont.truetype("Cairo-Bold.ttf", 36)
-    except OSError:
-        title_font = sub_font = badge_font = button_font = ImageFont.load_default()
 
     try:
         product_img = Image.open("product.png").convert("RGBA")
