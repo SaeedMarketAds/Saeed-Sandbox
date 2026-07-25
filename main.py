@@ -174,6 +174,21 @@ def generate_image(prompt: str) -> str:
         fallback_img.save(fallback_path)
         st.image(fallback_img, caption="تصميم احترافي", use_container_width=True)
         return fallback_path
+# =========================================================
+# 🎨 واجهة صانع الإعلانات
+# =========================================================
+
+def render_ad_builder_ui():
+    """عرض واجهة صانع الإعلانات التفاعلية."""
+    st.markdown("### 🎨 صانع الإعلانات التفاعلية")
+    
+    prompt_input = st.text_input("أدخل وصف الإعلان أو المنتج:", placeholder="مثال: خصومات حصرية على المنتجات")
+    
+    if st.button("توليد التصميم 🚀"):
+        if prompt_input:
+            generate_image(prompt_input)
+        else:
+            st.warning("يرجى إدخال نص أولاً!")
 
 
 
