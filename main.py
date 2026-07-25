@@ -71,6 +71,7 @@ def fix_arabic(text: str) -> str:
     reshaped_text = arabic_reshaper.reshape(text)
     return get_display(reshaped_text)
 
+
 def create_gemini_style_arabic_design():
     """إنشاء غلاف وتصميم تسويقي احترافي بنمط Gemini."""
     W, H = 1080, 1920
@@ -123,6 +124,56 @@ def create_gemini_style_arabic_design():
     return base.convert("RGB")
 
 
+def render_ad_builder_ui(active_prompt="توليد صورة لسوق سعيد Saeedmarketads"):
+    """دالة عرض واجهة صانع الإعلانات التفاعلية من HTML/Tailwind."""
+    html_code = f"""
+    <!DOCTYPE html>
+    <html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            body {{
+                background-color: #0b0f17;
+                color: #e2e8f0;
+                font-family: system-ui, -apple-system, sans-serif;
+            }}
+            .glow-box {{
+                box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);
+            }}
+        </style>
+    </head>
+    <body class="p-2 max-w-lg mx-auto">
+        <header class="flex justify-between items-center py-2 border-b border-gray-800 mb-3">
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-black text-white text-base shadow-lg">S</div>
+                <div>
+                    <h1 class="font-bold text-sm text-white leading-none">Saeed LogiC</h1>
+                    <span class="text-[9px] text-indigo-400 font-medium">SaeedMarketads AI Studio</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-gray-900/90 border border-gray-800 p-3 rounded-2xl flex items-center space-x-3 space-x-reverse glow-box mb-3">
+            <div class="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center text-base font-bold shrink-0">
+                <i class="fa-solid fa-store"></i>
+            </div>
+            <div class="text-xs overflow-hidden">
+                <p class="font-bold text-white flex items-center gap-1.5">
+                    SaeedMarketads
+                    <span class="bg-indigo-500/20 text-indigo-300 text-[9px] px-2 py-0.5 rounded-full border border-indigo-500/30">وكيل الإعلانات</span>
+                </p>
+                <p class="text-gray-400 text-xs truncate mt-0.5">{active_prompt}</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    components.html(html_code, height=180, scrolling=False)
+
+
 def prepare_text_for_speech(text: str) -> str:
     """تجهيز وتنظيف النص الصوتي مع تحسين النطق للكلمات العربية والإنجليزية."""
     replacements = [
@@ -160,6 +211,8 @@ def clean_text_for_speech(text: str) -> str:
     text = re.sub(r'\(.*?\)', '', text)
     text = re.sub(r'#+', '', text)
     return text.strip()
+
+
 
 
 # =========================================================
