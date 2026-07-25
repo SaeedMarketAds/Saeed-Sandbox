@@ -110,8 +110,6 @@ def get_arabic_font(size: int):
         return ImageFont.truetype(font_path, size)
     except Exception:
         return ImageFont.load_default()
-
-
 def create_gemini_style_arabic_design(
     title="خصومات نون الحصرية",
     subtitle="أقوى العروض والتخفيضات اليوم",
@@ -158,70 +156,13 @@ def create_gemini_style_arabic_design(
         sub_text = fix_arabic(subtitle)
         draw.text((540, 620), sub_text, font=sub_font, fill=(226, 232, 240, 255), anchor="mm")
 
-    return base
-    
-
-def create_gemini_style_arabic_design(
-    title="خصومات نون الحصرية", 
-    subtitle="أقوى العروض والتخفيضات اليوم", 
-    badge="خصم خاص"
-):
-    """إنشاء غلاف وتصميم تسويقي ديناميكي يتكيف مع الطلب بنمط احترافي."""
-    W, H = 1080, 1920
-    base = Image.new("RGBA", (W, H), (15, 23, 42, 255))
-    
-    # طبقة الإضاءة (Glow Effects)
-    glow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    glow_draw = ImageDraw.Draw(glow_layer)
-    glow_draw.ellipse([50, 100, 750, 800], fill=(99, 102, 241, 150))
-    glow_draw.ellipse([600, 1200, 1150, 1750], fill=(236, 72, 153, 130))
-    glow_draw.ellipse([W // 2 - 250, H // 2 - 250, W // 2 + 250, H // 2 + 250], fill=(14, 165, 233, 90))
-    
-    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(100))
-    base = Image.alpha_composite(base, glow_layer)
-    
-    # البطاقة الزجاجية
-    card_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    card_draw = ImageDraw.Draw(card_layer)
-    card_draw.rounded_rectangle([80, 200, 1000, 1720], radius=40, fill=(255, 255, 255, 20), outline=(255, 255, 255, 55), width=3)
-    base = Image.alpha_composite(base, card_layer)
-
-    # جلب الخطوط العربية الصحيحة
-    title_font = get_arabic_font(52)
-    sub_font = get_arabic_font(30)
-    badge_font = get_arabic_font(24)
-    button_font = get_arabic_font(34)
-
-    try:
-        product_img = Image.open("product.png").convert("RGBA")
-        product_img = product_img.resize((500, 500))
-        base.paste(product_img, ((W - 500) // 2, 550), product_img)
-    except FileNotFoundError:
-        pass
-
-    draw = ImageDraw.Draw(base)
-    right_x = 940
-    
-    # رسم الشارة والعناوين بالنصوص الديناميكية
-    badge_text = fix_arabic(badge)
-    draw.rounded_rectangle([right_x - 240, 260, right_x, 310], radius=12, fill=(99, 102, 241, 230))
-    draw.text((right_x - 220, 272), badge_text, font=badge_font, fill="white")
-    
-    draw.text((right_x - 750, 360), fix_arabic(title), font=title_font, fill="white")
-    draw.text((right_x - 750, 450), fix_arabic(subtitle), font=sub_font, fill=(226, 232, 240))
-    
-    btn_w = 320
-    btn_rect = [(W - btn_w) // 2, 1150, (W + btn_w) // 2, 1230]
-    draw.rounded_rectangle(btn_rect, radius=20, fill=(236, 72, 153, 255))
-    draw.text((btn_rect[0] + 60, 1168), fix_arabic("تسوق الآن"), font=button_font, fill="white")
-    
     return base.convert("RGB")
 
 
 def generate_image(prompt: str) -> str:
-    """توليد الصورة وتفعيل الاحتياطي الديناميكي بالنصوص المطلوبة."""
+    """مولد الصور المعتمد باستخدام Imagen 3 مع خيار محلي احتياطي."""
     try:
-        st.info("🎨 ...جاري تصميم الصورة")
+        st.info("🎨 جاري تصميم الصورة...")
         response = client_imagen.models.generate_images(
             model=IMAGEN_MODEL_NAME,
             prompt=f"Professional commercial product advertisement, {prompt}",
@@ -239,11 +180,8 @@ def generate_image(prompt: str) -> str:
             return image_path
 
     except Exception:
-        st.warning("⚠️ ...جاري التوليد المحلي الاحترافي للتصميم")
-        
-        # استخراج العنوان من طلب المستخدم أو افتراضي
+        st.warning("⚠️ جاري التوليد المحلي الاحترافي للتصميم...")
         title_text = prompt[:30] if prompt else "عرض خاص"
-        
         fallback_img = create_gemini_style_arabic_design(
             title=title_text, 
             subtitle="أحدث العروض والكوبونات المتاحة",
@@ -253,6 +191,8 @@ def generate_image(prompt: str) -> str:
         fallback_img.save(fallback_path)
         st.image(fallback_img, caption="تصميم احترافي", use_container_width=True)
         return fallback_path
+
+
 # =========================================================
 # 🎨 واجهة صانع الإعلانات
 # =========================================================
