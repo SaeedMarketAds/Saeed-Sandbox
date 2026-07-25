@@ -95,12 +95,14 @@ def fix_arabic(text: str) -> str:
         return text
 
 
+=========================================================
+
 def get_arabic_font(size: int):
     """جلب وتحميل الخط العربي تلقائياً لضمان عدم ظهور المربعات في السيرفر."""
     font_path = "Cairo-Bold.ttf"
     if not os.path.exists(font_path):
         try:
-            url = "https://github.com/google/fonts/raw/main/ofl/cairo/static/Cairo-Bold.ttf"
+            url = "https://raw.githubusercontent.com/google/fonts/main/ofl/cairo/static/Cairo-Bold.ttf"
             urllib.request.urlretrieve(url, font_path)
         except Exception:
             pass
@@ -109,6 +111,55 @@ def get_arabic_font(size: int):
     except Exception:
         return ImageFont.load_default()
 
+
+def create_gemini_style_arabic_design(
+    title="خصومات نون الحصرية",
+    subtitle="أقوى العروض والتخفيضات اليوم",
+    badge="خصم خاص"
+):
+    """إنشاء غلاف وتصميم تسويقي ديناميكي مع كتابة نصوص عربية واضحة."""
+    W, H = 1080, 1920
+    base = Image.new("RGBA", (W, H), (15, 23, 42, 255))
+
+    # طبقة الإضاءة (Glow Effects)
+    glow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow_layer)
+    glow_draw.ellipse([50, 100, 750, 800], fill=(99, 102, 241, 150))
+    glow_draw.ellipse([600, 1200, 1150, 1750], fill=(236, 72, 153, 130))
+    glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(100))
+    base = Image.alpha_composite(base, glow_layer)
+
+    # البطاقة الزجاجية
+    card_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    card_draw = ImageDraw.Draw(card_layer)
+    card_draw.rounded_rectangle([80, 200, 1000, 1720], radius=40, fill=(255, 255, 255, 20), outline=(255, 255, 255, 55), width=2)
+    base = Image.alpha_composite(base, card_layer)
+
+    # جلب الخطوط
+    title_font = get_arabic_font(60)
+    sub_font = get_arabic_font(40)
+    badge_font = get_arabic_font(32)
+
+    draw = ImageDraw.Draw(base)
+
+    # رسم الشارة (Badge)
+    if badge:
+        badge_text = fix_arabic(badge)
+        draw.rectangle([700, 260, 950, 330], fill=(236, 72, 153, 255))
+        draw.text((825, 295), badge_text, font=badge_font, fill=(255, 255, 255, 255), anchor="mm")
+
+    # رسم العنوان الرئيسي
+    if title:
+        title_text = fix_arabic(title)
+        draw.text((540, 500), title_text, font=title_font, fill=(255, 255, 255, 255), anchor="mm")
+
+    # رسم العنوان الفرعي
+    if subtitle:
+        sub_text = fix_arabic(subtitle)
+        draw.text((540, 620), sub_text, font=sub_font, fill=(226, 232, 240, 255), anchor="mm")
+
+    return base
+    
 
 def create_gemini_style_arabic_design(
     title="خصومات نون الحصرية", 
