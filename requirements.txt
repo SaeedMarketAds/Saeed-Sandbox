@@ -1,8 +1,9 @@
-streamlit
-google-genai
-pillow
 arabic-reshaper
-python-bidi
 edge-tts
+google-genai
 moviepy
+pillow
+python-bidi
 requests
+streamlit
+
