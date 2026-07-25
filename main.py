@@ -423,6 +423,9 @@ st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="cente
 st.title("Saeed LogiC Pro 🚀")
 st.subheader("النظام التفاعلي الموحد لإدارة العروض والصوت والصور والفيديو والموسيقى")
 
+# 📍 استدعاء واجهة صانع الإعلانات التفاعلية هنا
+render_ad_builder_ui()
+
 if "quick_action" not in st.session_state:
     st.session_state.quick_action = None
 
