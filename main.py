@@ -1,25 +1,38 @@
 import warnings
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 
+# =========================================================
+# 1. المكتبات القياسية (Standard Libraries)
+# =========================================================
+import asyncio
+import io
 import json
 import os
 import re
-import io
 import time
-import asyncio
-import streamlit as st
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
-from google import genai
-from google.genai import types
-import edge_tts
+
+# =========================================================
+# 2. المكتبات الخارجية (Third-Party Libraries)
+# =========================================================
 import arabic_reshaper
 from bidi.algorithm import get_display
+import edge_tts
+from google import genai
+from google.genai import types
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-# استيراد أدوات الفيديو مع معالجة الاستثناء في حال عدم توفرها
+# Streamlit والمكونات التفاعلية
+import streamlit as st
+import streamlit.components.v1 as components
+
+# =========================================================
+# 3. مكتبات معالجة الوسائط (مع حماية الاستيراد)
+# =========================================================
 try:
     from moviepy.editor import AudioFileClip, ImageClip
 except ImportError:
     pass
+
 
 # =========================================================
 # 🔑 الإعدادات وتوحيد مفاتيح وبنية الموديلات
