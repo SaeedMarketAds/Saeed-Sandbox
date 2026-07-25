@@ -66,6 +66,29 @@ import urllib.request
 # =========================================================
 # 🎨 أدوات المعالجة والتصميم العربي والدعم الديناميكي
 # =========================================================
+# =========================================================
+# 🛠️ دوال معالجة النصوص والصوت
+# =========================================================
+
+def fix_arabic(text: str) -> str:
+    """معالجة وتعديل النص العربي للعرض الصحيح على الصور."""
+    if not text:
+        return ""
+    try:
+        import arabic_reshaper
+        from bidi.algorithm import get_display
+        return get_display(arabic_reshaper.reshape(text))
+    except ImportError:
+        return text
+
+
+def prepare_text_for_speech(text: str) -> str:
+    """تنظيف النص من رموز Markdown والروابط قبل تحويله لـ TTS."""
+    if not text:
+        return ""
+    clean_text = re.sub(r'http\S+', '', text)
+    clean_text = re.sub(r'[*_~`#\-]', '', clean_text)
+    return clean_text.strip()
 
 def get_arabic_font(size: int):
     """جلب وتحميل الخط العربي تلقائياً لضمان عدم ظهور المربعات في السيرفر."""
