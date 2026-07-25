@@ -22,24 +22,27 @@ except ImportError:
     pass
 
 # =========================================================
-# 🔑 الإعدادات وتوحيد مفاتيح وبنية الموديلات
+# 🔑 الإعدادات وتوحيد مفاتيح وبنية الموديلات الستة المحدثة
 # =========================================================
 
 MODEL_NAME = "gemini-3.1-flash-lite"
 GEMMA_MODEL_NAME = "gemma-4-26b-a4b-it"
 IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
 VEO_MODEL_NAME = "veo-2.0-generate-001"
+FALLBACK_MODEL_NAME = "gemini-1.5-flash"
 
-# قراءة المفاتيح من Streamlit Secrets مع خيارات الطوارئ
-GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
-AUDIO_API_KEY = st.secrets.get("AUDIO_API_KEY", "")
-BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "")
-IMAGEN_API_KEY = st.secrets.get("IMAGEN_API_KEY", "")
+# قراءة المفاتيح والتسميات التعريفية الجديدة
+GEMINI_API_KEY = "Gemini 3.1Flash TTS"
+AUDIO_API_KEY = "emma 4.FlashLite"
+BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+IMAGEN_API_KEY = st.secrets.get("IMAGEN_API_KEY", "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
-# توحيد المفتاح النشط لجميع الموديلات
-PRIMARY_KEY = GEMINI_API_KEY or BACKUP_API_KEY
-AUDIO_KEY = AUDIO_API_KEY or PRIMARY_KEY
-IMAGEN_KEY = IMAGEN_API_KEY or PRIMARY_KEY
+# توحيد المفتاح النشط الفعلي لجميع العميل البرمجي
+RAW_GEMINI_KEY = st.secrets.get("RAW_GEMINI_KEY", "")
+RAW_AUDIO_KEY = st.secrets.get("RAW_AUDIO_KEY", "")
+PRIMARY_KEY = RAW_GEMINI_KEY or BACKUP_API_KEY
+AUDIO_KEY = RAW_AUDIO_KEY or PRIMARY_KEY
+IMAGEN_KEY = IMAGEN_API_KEY if IMAGEN_API_KEY.startswith("AIza") else PRIMARY_KEY
 
 # تهيئة العملاء الموحدين
 client_main = genai.Client(api_key=PRIMARY_KEY)
@@ -168,7 +171,7 @@ def load_local_coupons():
 # =========================================================
 
 def handle_general_chat(user_input: str) -> str:
-    """العقل الحواري العام والدعم الفني (Gemini Flash Lite)."""
+    """العقل الحواري العام والدعم الفني (Gemini Flash Lite مع نظام الطوارئ 1.5)."""
     prompt = (
         f"أنت (Saeed LogiC Pro)، مساعد التسوق الذكي واللبق والمطور خصيصاً "
         f"لصالح منصة وشبكة (Saeed MarketAds) الرائدة في العروض والتسويق الرقمي.\n"
@@ -182,8 +185,15 @@ def handle_general_chat(user_input: str) -> str:
             contents=prompt
         )
         return response.text
-    except Exception as e:
-        return f"عذراً، تعذر الاتصال بمساعد الحوار حالياً. التفاصيل: {str(e)}"
+    except Exception:
+        try:
+            response = client_main.models.generate_content(
+                model=FALLBACK_MODEL_NAME,
+                contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            return f"عذراً، تعذر الاتصال بمساعد الحوار حالياً. التفاصيل: {str(e)}"
 
 
 def process_coupon_with_gemma(user_input: str) -> str:
@@ -448,3 +458,4 @@ if user_input:
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(prepare_text_for_speech(reply))
+
