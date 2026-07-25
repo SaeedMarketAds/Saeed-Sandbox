@@ -1,40 +1,25 @@
 import warnings
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 
-# =========================================================
-# 1. مكتبات بايثون الأساسية (Standard Library)
-# =========================================================
-import asyncio
-import io
 import json
 import os
 import re
+import io
 import time
-
-# =========================================================
-# 2. المكتبات الخارجية (Third-Party Libraries)
-# =========================================================
-import arabic_reshaper
-from bidi.algorithm import get_display
-import edge_tts
+import asyncio
+import streamlit as st
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from google import genai
 from google.genai import types
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+import edge_tts
+import arabic_reshaper
+from bidi.algorithm import get_display
 
-# Streamlit واختصارات مكوناته
-import streamlit as st
-import streamlit.components.v1 as components
-
-# =========================================================
-# 3. استيراد اختياري مع معالجة الاستثناءات
-# =========================================================
 # استيراد أدوات الفيديو مع معالجة الاستثناء في حال عدم توفرها
 try:
     from moviepy.editor import AudioFileClip, ImageClip
 except ImportError:
     pass
-
-
 
 # =========================================================
 # 🔑 الإعدادات وتوحيد مفاتيح وبنية الموديلات
@@ -61,157 +46,105 @@ client_main = genai.Client(api_key=PRIMARY_KEY)
 client_audio = genai.Client(api_key=AUDIO_KEY)
 client_imagen = genai.Client(api_key=IMAGEN_KEY)
 
-import urllib.request
 
 # =========================================================
-# 🎨 أدوات المعالجة والتصميم العربي والدعم الديناميكي
+# 🎨 أدوات المعالجة والتصميم العربي
 # =========================================================
-# =========================================================
-# 🛠️ دوال معالجة النصوص والصوت
-# =========================================================
-
-def clean_text_for_speech(text: str) -> str:
-    """تنظيف النص من رموز Markdown والروابط قبل تحويله لـ TTS."""
-    if not text:
-        return ""
-    clean_text = re.sub(r'http\S+', '', text)
-    clean_text = re.sub(r'[*_~`#\-]', '', clean_text)
-    return clean_text.strip()
-
-# ربط الاسم الآخر بالدالة لضمان توافق جميع استدعاءات الكود
-prepare_text_for_speech = clean_text_for_speech
-
 
 def fix_arabic(text: str) -> str:
-    """معالجة وتعديل النص العربي للعرض الصحيح على الصور."""
-    if not text:
-        return ""
-    try:
-        import arabic_reshaper
-        from bidi.algorithm import get_display
-        reshaped = arabic_reshaper.reshape(text)
-        return get_display(reshaped)
-    except Exception:
-        return text
+    """إعادة تشكيل وتحسين اتجاه النص العربي للصور."""
+    reshaped_text = arabic_reshaper.reshape(text)
+    return get_display(reshaped_text)
 
-
-#=========================================================
-
-def get_arabic_font(size: int):
-    """جلب وتحميل الخط العربي تلقائياً لضمان عدم ظهور المربعات في السيرفر."""
-    font_path = "Cairo-Bold.ttf"
-    if not os.path.exists(font_path):
-        try:
-            url = "https://raw.githubusercontent.com/google/fonts/main/ofl/cairo/static/Cairo-Bold.ttf"
-            urllib.request.urlretrieve(url, font_path)
-        except Exception:
-            pass
-    try:
-        return ImageFont.truetype(font_path, size)
-    except Exception:
-        return ImageFont.load_default()
-def create_gemini_style_arabic_design(
-    title="خصومات نون الحصرية",
-    subtitle="أقوى العروض والتخفيضات اليوم",
-    badge="خصم خاص"
-):
-    """إنشاء غلاف وتصميم تسويقي ديناميكي مع كتابة نصوص عربية واضحة."""
+def create_gemini_style_arabic_design():
+    """إنشاء غلاف وتصميم تسويقي احترافي بنمط Saeed MarketAds."""
     W, H = 1080, 1920
     base = Image.new("RGBA", (W, H), (15, 23, 42, 255))
-
-    # طبقة الإضاءة (Glow Effects)
+    
     glow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     glow_draw = ImageDraw.Draw(glow_layer)
     glow_draw.ellipse([50, 100, 750, 800], fill=(99, 102, 241, 150))
     glow_draw.ellipse([600, 1200, 1150, 1750], fill=(236, 72, 153, 130))
+    glow_draw.ellipse([W//2 - 250, H//2 - 250, W//2 + 250, H//2 + 250], fill=(14, 165, 233, 90))
+    
     glow_layer = glow_layer.filter(ImageFilter.GaussianBlur(100))
     base = Image.alpha_composite(base, glow_layer)
-
-    # البطاقة الزجاجية
+    
     card_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     card_draw = ImageDraw.Draw(card_layer)
-    card_draw.rounded_rectangle([80, 200, 1000, 1720], radius=40, fill=(255, 255, 255, 20), outline=(255, 255, 255, 55), width=2)
+    card_draw.rounded_rectangle([80, 200, 1000, 1720], radius=40, fill=(255, 255, 255, 20), outline=(255, 255, 255, 55), width=3)
     base = Image.alpha_composite(base, card_layer)
 
-    # جلب الخطوط
-    title_font = get_arabic_font(60)
-    sub_font = get_arabic_font(40)
-    badge_font = get_arabic_font(32)
+    try:
+        title_font = ImageFont.truetype("Cairo-Bold.ttf", 60)
+        sub_font = ImageFont.truetype("Cairo-Regular.ttf", 32)
+        badge_font = ImageFont.truetype("Cairo-Bold.ttf", 24)
+        button_font = ImageFont.truetype("Cairo-Bold.ttf", 36)
+    except OSError:
+        title_font = sub_font = badge_font = button_font = ImageFont.load_default()
+
+    try:
+        product_img = Image.open("product.png").convert("RGBA")
+        product_img = product_img.resize((500, 500))
+        base.paste(product_img, ((W - 500) // 2, 550), product_img)
+    except FileNotFoundError:
+        pass
 
     draw = ImageDraw.Draw(base)
-
-    # رسم الشارة (Badge)
-    if badge:
-        badge_text = fix_arabic(badge)
-        draw.rectangle([700, 260, 950, 330], fill=(236, 72, 153, 255))
-        draw.text((825, 295), badge_text, font=badge_font, fill=(255, 255, 255, 255), anchor="mm")
-
-    # رسم العنوان الرئيسي
-    if title:
-        title_text = fix_arabic(title)
-        draw.text((540, 500), title_text, font=title_font, fill=(255, 255, 255, 255), anchor="mm")
-
-    # رسم العنوان الفرعي
-    if subtitle:
-        sub_text = fix_arabic(subtitle)
-        draw.text((540, 620), sub_text, font=sub_font, fill=(226, 232, 240, 255), anchor="mm")
-
+    right_x = 940
+    
+    badge_text = fix_arabic("إصدار محدود 2026")
+    draw.rounded_rectangle([right_x - 220, 260, right_x, 310], radius=12, fill=(99, 102, 241, 230))
+    draw.text((right_x - 200, 272), badge_text, font=badge_font, fill="white")
+    
+    draw.text((right_x - 550, 360), fix_arabic("عروض Saeed MarketAds"), font=title_font, fill="white")
+    draw.text((right_x - 620, 460), fix_arabic("تجربة تسوق رقمية ذكية ومتكاملة"), font=sub_font, fill=(226, 232, 240))
+    
+    btn_w = 300
+    btn_rect = [(W - btn_w) // 2, 1150, (W + btn_w) // 2, 1230]
+    draw.rounded_rectangle(btn_rect, radius=20, fill=(236, 72, 153, 255))
+    draw.text((btn_rect[0] + 65, 1168), fix_arabic("اطلب الآن"), font=button_font, fill="white")
+    
     return base.convert("RGB")
 
 
-def generate_image(prompt: str) -> str:
-    """مولد الصور المعتمد باستخدام Imagen 3 مع خيار محلي احتياطي."""
-    try:
-        st.info("🎨 جاري تصميم الصورة...")
-        response = client_imagen.models.generate_images(
-            model=IMAGEN_MODEL_NAME,
-            prompt=f"Professional commercial product advertisement, {prompt}",
-            config=dict(
-                number_of_images=1,
-                output_mime_type="image/jpeg",
-                aspect_ratio="1:1"
-            )
-        )
-        for generated_image in response.generated_images:
-            image_path = "generated_output.png"
-            image = Image.open(io.BytesIO(generated_image.image.image_bytes))
-            image.save(image_path)
-            st.image(image, caption="الصورة الناتجة 🎨", use_container_width=True)
-            return image_path
+def prepare_text_for_speech(text: str) -> str:
+    """تجهيز وتنظيف النص الصوتي مع تحسين النطق للكلمات العربية والإنجليزية."""
+    replacements = [
+        (r'\bورحمة الله\b', 'وَرَحْمَةُ اللَّهِ'),
+        (r'\bالله\b', 'اللَّهِ'),
+        (r'\bيا\s+فندم\b', ''),
+        (r'\bفندم\b', ''),
+        (r'\bSaeed\s+LogiC\s+Pro\b', 'سَعِيد لُوجِيك بْرُو'),
+        (r'\bSaeed\s+Logic\s+Pro\b', 'سَعِيد لُوجِيك بْرُو'),
+        (r'\bSaeed\s+LogiC\b', 'سَعِيد لُوجِيك'),
+        (r'\bSaeed\s+Logic\b', 'سَعِيد لُوجِيك'),
+        (r'\bSaeed\s+MarketAds\b', 'سَعِيد مَارْكِت أَدْس'),
+        (r'\bSaeed\b', 'سَعِيد'),
+        (r'\bMarketAds\b', 'مَارْكِت أَدْس'),
+        (r'\bPro\b', 'بْرُو'),
+        (r'\bSHEIN\b', 'شِي إن'),
+        (r'\bAliExpress\b', 'عَلِي إكْسِبْرِيس'),
+        (r'\bNoon\b', 'نُون'),
+        (r'\bSAED\b', 'سَعِيد'),
+        (r'\bأهلاً\b', 'أَهْلًا'),
+        (r'\bاهلاً\b', 'أَهْلًا'),
+    ]
 
-    except Exception:
-        st.warning("⚠️ جاري التوليد المحلي الاحترافي للتصميم...")
-        title_text = prompt[:30] if prompt else "عرض خاص"
-        fallback_img = create_gemini_style_arabic_design(
-            title=title_text, 
-            subtitle="أحدث العروض والكوبونات المتاحة",
-            badge="عروض حصرية"
-        )
-        fallback_path = "generated_output.png"
-        fallback_img.save(fallback_path)
-        st.image(fallback_img, caption="تصميم احترافي", use_container_width=True)
-        return fallback_path
+    for pattern, replacement in replacements:
+        text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+
+    text = re.sub(r'[*#_~`>\[\]\(\)]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 
-# =========================================================
-# 🎨 واجهة صانع الإعلانات
-# =========================================================
-
-def render_ad_builder_ui():
-    """عرض واجهة صانع الإعلانات التفاعلية."""
-    st.markdown("### 🎨 صانع الإعلانات التفاعلية")
-    
-    prompt_input = st.text_input("أدخل وصف الإعلان أو المنتج:", placeholder="مثال: خصومات حصرية على المنتجات")
-    
-    if st.button("توليد التصميم 🚀"):
-        if prompt_input:
-            generate_image(prompt_input)
-        else:
-            st.warning("يرجى إدخال نص أولاً!")
-
-
-
-
+def clean_text_for_speech(text: str) -> str:
+    text = re.sub(r'\*+', '', text)
+    text = re.sub(r'\[.*?\]', '', text)
+    text = re.sub(r'\(.*?\)', '', text)
+    text = re.sub(r'#+', '', text)
+    return text.strip()
 
 
 # =========================================================
@@ -421,9 +354,6 @@ def route_user_request(user_input: str) -> str:
 st.set_page_config(page_title="Saeed LogiC Pro", page_icon="🚀", layout="centered")
 st.title("Saeed LogiC Pro 🚀")
 st.subheader("النظام التفاعلي الموحد لإدارة العروض والصوت والصور والفيديو والموسيقى")
-
-# 📍 استدعاء واجهة صانع الإعلانات التفاعلية هنا
-render_ad_builder_ui()
 
 if "quick_action" not in st.session_state:
     st.session_state.quick_action = None
