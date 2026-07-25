@@ -2,7 +2,7 @@ import warnings
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 # =========================================================
-# 1. المكتبات القياسية (Standard Libraries)
+# 1. مكتبات بايثون الأساسية (Standard Library)
 # =========================================================
 import asyncio
 import io
@@ -21,17 +21,19 @@ from google import genai
 from google.genai import types
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-# Streamlit والمكونات التفاعلية
+# Streamlit واختصارات مكوناته
 import streamlit as st
 import streamlit.components.v1 as components
 
 # =========================================================
-# 3. مكتبات معالجة الوسائط (مع حماية الاستيراد)
+# 3. استيراد اختياري مع معالجة الاستثناءات
 # =========================================================
+# استيراد أدوات الفيديو مع معالجة الاستثناء في حال عدم توفرها
 try:
     from moviepy.editor import AudioFileClip, ImageClip
 except ImportError:
     pass
+
 
 
 # =========================================================
