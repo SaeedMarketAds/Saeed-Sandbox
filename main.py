@@ -25,25 +25,32 @@ import os
 import streamlit as st
 from google import genai
 
-# =========================================================
-# 🔑 مفاتيح Gemini API الموحدة والآمنة 100%
-# =========================================================
+import os
+import streamlit as st
+from google import genai
 
-# 1. ضع مفتاحك الحقيقي الصحيح هنا (الذي تبدأ نسخته بـ AIzaSy...)
-# أو اجعله يقرأه من ملف st.secrets تلقائياً
-GEMINI_MAIN_KEY = st.secrets.get("GEMINI_MAIN_KEY", "AIzaSy_ضع_مفتاحك_الحقيقي_هنا_بدون_فراغات")
+# =========================================================
+# ⚙️ تعريف أسماء الموديلات الأساسية (إصلاح خطأ MODEL_NAME)
+# =========================================================
+MODEL_NAME = "gemini-2.5-flash"
+GEMMA_MODEL_NAME = "gemma-4-26b-a4b-it"
+IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
+VEO_MODEL_NAME = "veo-2.0-generate-001"
+FALLBACK_MODEL_NAME = "gemini-1.5-flash"
 
-# 2. مفتاح الاحتياط (يمكنك تركيزه على نفس المفتاح الرئيسي لضمان عدم توقف الخدمة)
+# =========================================================
+# 🔑 مفاتيح API الموحدة والآمنة
+# =========================================================
+GEMINI_MAIN_KEY = st.secrets.get("GEMINI_MAIN_KEY", "AIzaSy_ضع_مفتاحك_الحقيقي_هنا")
 GEMINI_BACKUP_KEY = st.secrets.get("GEMINI_BACKUP_KEY", GEMINI_MAIN_KEY)
 
-# استخدام المفتاح الفعال للعملاء البرمجيين
+# تفعيل المفتاح النشط
 active_api_key = GEMINI_MAIN_KEY if GEMINI_MAIN_KEY.startswith("AIza") else GEMINI_BACKUP_KEY
 
-# تهيئة عملاء الاتصال بالمفتاح الصحيح والموثوق
+# تهيئة عملاء الاتصال
 client_main = genai.Client(api_key=active_api_key)
 client_audio = genai.Client(api_key=active_api_key)
 client_imagen = genai.Client(api_key=active_api_key)
-
 
 
 # =========================================================
