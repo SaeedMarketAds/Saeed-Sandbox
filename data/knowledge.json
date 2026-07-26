@@ -1,151 +1,299 @@
-{
-  "مرحباً": "أهلاً بك! كيف يمكنني مساعدتك؟",
-  "السلام عليكم": "وعليكم السلام ورحمة الله وبركاته",
-  "ما اسمك": "اسمي Saeed LogiC، مساعد التسوق",
-  "كيف حالك": "أنا بخير، شكراً للسؤال! كيف يمكنني خدمتك؟",
-  "من أنت": "أنا مساعد التسوق الخاص بـ Saeed MarketAds",
-  "coupons": [
-    {
-      "store": "مرحباً بك في Saeed LogiC Pro",
-      "code": "نظام ذكي",
-      "description": "وعليكم السلام ورحمة الله وبركاته! أنا مساعدك التسوقي الذكي المستقر، جاهز لمساعدتك في العثور على أقوى العروض.",
-      "keywords": ["السلام", "سلام", "مرحبا", "أهلاً", "عروض", "كوبونات", "اليوم", "استخرج"]
-    },
-    {
-      "store": "حالة النظام: ممتاز ⚡",
-      "code": "نشط الآن",
-      "description": "الحمد لله أنا بخير وعملي مستقر 100%! جاهز للبحث. إليك عروض سريعة: نون (خصم 15%)، شي إن (خصم 30%).",
-      "keywords": ["كيف حالك", "شلونك", "أخبارك"]
-    },
-    {
-      "store": "💡 الفائدة من المساعد",
-      "code": "توفير ذكي",
-      "description": "أقوم بتوفير أموالك ووقتك عبر تتبع الكوبونات الحصرية لمتاجر AliExpress و Noon و SHEIN وتجهيزها لك فوراً.",
-      "keywords": ["مافائدة منك", "ما الفائدة منك", "ماذا تفعل", "وظيفتك"]
-    },
-    {
-      "store": "المؤسس: سعيد المسوري (أبو رائد) 👑",
-      "code": "Saeed MarketAds",
-      "description": "سعيد المسوري هو مطور هذا النظام ومؤسس Saeed MarketAds للتسويق بالعمولة والأتمتة البرمجية الذكية.",
-      "keywords": ["من هو سعيد المسوري", "سعيد المسوري", "المطور", "صاحب البرنامج"]
-    },
-    {
-      "store": "نون (Noon)",
-      "code": "NOON15",
-      "description": "خصم فوري بقيمة 15% على جميع المنتجات والملابس عند الدفع.",
-      "keywords": ["نون", "noon", "كود نون", "كوبون نون", "عروض", "كوبونات"]
-    },
-    {
-      "store": "شي إن (SHEIN)",
-      "code": "SHEIN30",
-      "description": "خصم قوي 30% على الفساتين والملابس الصيفية الجديدة.",
-      "keywords": ["شي إن", "shein", "فستان", "ملابس", "شي ان", "عروض", "كوبونات"]
-    },
-    {
-      "store": "(SHEIN) شي إن - مستخدمين جدد",
-      "code": "N73QS",
-      "description": "خصم 30% للمستخدمين الجدد، يربط المتسوق بمختاراتك الخاصة عند أول طلب.",
-      "keywords": ["كود", "خصم", "N73QS", "شين", "shein", "شي ان", "عروض", "كوبونات", "استخرج", "اليوم", "قاعدة البيانات"]
-    },
-    {
-      "store": "علي إكسبريس (AliExpress)",
-      "code": "ALI50",
-      "description": "خصم يصل إلى 50% على الأجهزة الإلكترونية وإكسسوارات الهواتف.",
-      "keywords": ["علي اكسبريس", "aliexpress", "متجر", "الكترونيات", "عروض", "كوبونات"]
-    }
-  ]
-}
-{
-  "metadata": {
-    "platform_name": "Saeed MarketAds",
-    "bot_name": "Saeed LogiC Pro",
-    "version": "2.0.0 - Hierarchical",
-    "last_updated": "2026-07-26"
-  },
-  "system_responses": {
-    "greeting": "أهلاً بك! أنا مساعد التسوق الذكي واللبق لشبكة Saeed MarketAds. كيف يمكنني مساعدتك في العثور على أقوى العروض اليوم؟",
-    "unknown_query": "أنا مبرمج للإجابة فقط على قاعدة البيانات الخاصة بالعروض والكوبونات، وللأسف لا أملك إجابة على هذا السؤال حالياً. يمكنك زيارة موقعنا للاطلاع على المزيد من العروض.",
-    "thanks": "العفو! يسعدني أن أكون قد ساعدتك. استمتع بتسوق ذكي مع Saeed MarketAds."
-  },
-  "categories": [
-    {
-      "category_id": "cat_shopping_general",
-      "category_name": "تسوق عام",
-      "description": "عروض وكوبونات عامة للمتاجر الكبرى",
-      "keywords": ["تسوق", "عروض", "متاجر", "خصومات", "كوبونات", "ملابس", "فستان"],
-      "stores": [
-        {
-          "store_id": "store_noon",
-          "store_name": "نون (Noon)",
-          "logo_url": "noon_logo_url",
-          "description": "منصة التسوق الرائدة في الشرق الأوسط",
-          "keywords": ["نون", "noon", "خصم نون", "كود نون", "عروض نون"],
-          "coupons": [
-            {
-              "coupon_id": "noon_15_all",
-              "code": "NOON15",
-              "description": "خصم فوري بقيمة 15٪ على جميع المنتجات والملابس عند الدفع.",
-              "valid_until": "2026-12-31",
-              "usage_limit": "multiple_use",
-              "terms_apply": true
-            },
-            {
-              "coupon_id": "noon_new_user_20",
-              "code": "NOONNEW",
-              "description": "خصم 20٪ للعملاء الجدد بحد أقصى 50 ريال.",
-              "valid_until": "2026-12-31",
-              "usage_limit": "one_time_per_user",
-              "min_purchase": 100
-            }
-          ]
+# =====================================================
+# 📊 نظام الفواصل الذكي Saeed LogiC Pro v2.0
+# =====================================================
+
+from datetime import datetime, timedelta
+import json
+import os
+
+class SmartSeparator:
+    """
+    نظام فواصل ذكي للتدريب اليومي/الأسبوعي
+    مع إمكانية التخصيص والتطوير
+    """
+    
+    def __init__(self):
+        self.config = {
+            "training_interval": "daily",  # daily, weekly, monthly
+            "auto_backup": True,
+            "max_versions": 30,
+            "separator_style": "mixed"  # classic, modern, minimal, decorated
+        }
+        self.last_training = None
+        self.training_count = 0
+        
+    # =====================================================
+    # 🎨 أنماط الفواصل المتعددة
+    # =====================================================
+    
+    SEPARATORS = {
+        "classic": {
+            "main": "#" * 60,
+            "section": "#" + "-" * 58 + "#",
+            "sub": "#" + "." * 58 + "#"
         },
-        {
-          "store_id": "store_shein",
-          "store_name": "شي إن (SHEIN)",
-          "description": "أزياء عالمية بأسعار معقولة",
-          "keywords": ["شي إن", "shein", "كود شي إن", "عروض شي إن", "ملابس", "فساتين"],
-          "coupons": [
-            {
-              "coupon_id": "shein_30_all",
-              "code": "SHEIN30",
-              "description": "خصم 30٪ على الفساتين والملابس الصيفية الجديدة.",
-              "valid_until": "2026-08-15",
-              "usage_limit": "multiple_use"
-            },
-            {
-              "coupon_id": "shein_plus_30",
-              "code": "SaeedPlus",
-              "description": "خصم 30٪ لمشتركينا الجدد عبر التسوق الحصري عبر أول طلب.",
-              "valid_until": "2026-12-31",
-              "usage_limit": "one_time_per_user",
-              "exclusive_to": "Saeed Plus"
-            }
-          ]
+        "modern": {
+            "main": "━" * 60,
+            "section": "┅" * 60,
+            "sub": "┄" * 60
+        },
+        "minimal": {
+            "main": "=" * 40,
+            "section": "-" * 40,
+            "sub": "·" * 40
+        },
+        "decorated": {
+            "main": "🌟" + "═" * 56 + "🌟",
+            "section": "💎" + "─" * 56 + "💎",
+            "sub": "✦" + "·" * 56 + "✦"
         }
-      ]
-    },
-    {
-      "category_id": "cat_home_lifestyle",
-      "category_name": "مستلزمات منزلية وإلكترونيات",
-      "description": "عروض الأجهزة والإلكترونيات",
-      "keywords": ["إلكترونيات", "أجهزة", "مستلزمات منزلية", "جوالات", "ساعات", "ديكور"],
-      "stores": [
-        {
-          "store_id": "store_aliexpress",
-          "store_name": "علي إكسبريس (AliExpress)",
-          "description": "موقع تسوق عالمي شامل",
-          "keywords": ["علي إكسبريس", "aliexpress", "كود علي إكسبريس", "عروض التقنية", "ساعة"],
-          "coupons": [
-            {
-              "coupon_id": "alx_50_off",
-              "code": "ALX50",
-              "description": "خصم يصل إلى 50٪ على الأجهزة الإلكترونية وإكسسوارات الهواتف.",
-              "valid_until": "2026-09-01",
-              "usage_limit": "multiple_use"
-            }
-          ]
-        }
-      ]
     }
-  ]
-}
+    
+    # =====================================================
+    # 📅 توليد فواصل زمنية ذكية
+    # =====================================================
+    
+    def get_timestamped_separator(self, level="main", label=None):
+        """
+        توليد فاصل بعلامة زمنية وتصنيف
+        """
+        style = self.config["separator_style"]
+        sep = self.SEPARATORS[style][level]
+        
+        now = datetime.now().strftime("%Y-%m-%d %H:%M")
+        day_name = datetime.now().strftime("%A").translate({
+            "Monday": "الإثنين", "Tuesday": "الثلاثاء",
+            "Wednesday": "الأربعاء", "Thursday": "الخميس",
+            "Friday": "الجمعة", "Saturday": "السبت",
+            "Sunday": "الأحد"
+        })
+        
+        if label:
+            return f"""
+{sep}
+📌 {label} | 🕐 {now} | 📅 {day_name}
+{sep}
+"""
+        return f"""
+{sep}
+🕐 {now} | 📅 {day_name} | 📊 التدريب #{self.training_count + 1}
+{sep}
+"""
+    
+    # =====================================================
+    # 🔄 نظام التدريب المتكرر
+    # =====================================================
+    
+    def should_train(self):
+        """
+        تحديد ما إذا كان يجب التدريب بناءً على الإعدادات
+        """
+        if self.last_training is None:
+            return True
+            
+        now = datetime.now()
+        interval = self.config["training_interval"]
+        
+        if interval == "daily":
+            return now.date() > self.last_training.date()
+        elif interval == "weekly":
+            return now.isocalendar()[1] > self.last_training.isocalendar()[1]
+        elif interval == "monthly":
+            return now.month > self.last_training.month or now.year > self.last_training.year
+        elif interval == "hourly":
+            return now.hour > self.last_training.hour or now.day > self.last_training.day
+            
+        return False
+    
+    def record_training(self):
+        """
+        تسجيل جلسة تدريب جديدة
+        """
+        self.last_training = datetime.now()
+        self.training_count += 1
+        self._save_state()
+    
+    # =====================================================
+    # 💾 حفظ واستعادة الحالة
+    # =====================================================
+    
+    def _save_state(self):
+        state = {
+            "last_training": self.last_training.isoformat(),
+            "training_count": self.training_count,
+            "config": self.config
+        }
+        with open("training_state.json", "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+    
+    def load_state(self):
+        try:
+            with open("training_state.json", "r", encoding="utf-8") as f:
+                state = json.load(f)
+                self.last_training = datetime.fromisoformat(state["last_training"])
+                self.training_count = state["training_count"]
+                self.config.update(state.get("config", {}))
+        except FileNotFoundError:
+            pass
+
+# =====================================================
+# 📝 مثال الاستخدام العملي
+# =====================================================
+
+class TrainingManager:
+    """
+    مدير التدريب المتكامل مع قاعدة البيانات
+    """
+    
+    def __init__(self, data_file="coupons_data.json"):
+        self.data_file = data_file
+        self.separator = SmartSeparator()
+        self.separator.load_state()
+        self.data = self._load_data()
+        
+    def _load_data(self):
+        """تحميل البيانات مع فواصل ذكية"""
+        try:
+            with open(self.data_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return self._create_initial_data()
+    
+    def _create_initial_data(self):
+        """إنشاء بيانات أولية مع فواصل"""
+        return {
+            "metadata": {
+                "created": datetime.now().isoformat(),
+                "last_updated": datetime.now().isoformat(),
+                "version": "2.0.0"
+            },
+            "coupons": []
+        }
+    
+    # =====================================================
+    # 🏋️ جلسات التدريب المجدولة
+    # =====================================================
+    
+    def daily_training_session(self):
+        """
+        جلسة تدريب يومية كاملة
+        """
+        if not self.separator.should_train():
+            print("⏳ لا حاجة للتدريب الآن، تم التدريب مسبقاً")
+            return
+        
+        print(self.separator.get_timestamped_separator(
+            level="main",
+            label="🚀 بدء جلسة التدريب اليومية"
+        ))
+        
+        # تحديث البيانات
+        self._update_coupons()
+        self._clean_expired()
+        self._add_daily_offers()
+        
+        # تسجيل التدريب
+        self.separator.record_training()
+        self._save_data()
+        
+        print(self.separator.get_timestamped_separator(
+            level="section",
+            label="✅ اكتمل التدريب بنجاح"
+        ))
+    
+    def _update_coupons(self):
+        """تحديث الكوبونات من مصادر مختلفة"""
+        # محاكاة جلب كوبونات جديدة
+        new_coupons = [
+            {
+                "store": "نون",
+                "code": f"DAILY{datetime.now().day}",
+                "description": "عرض اليوم الخاص",
+                "added": datetime.now().isoformat()
+            }
+        ]
+        self.data["coupons"].extend(new_coupons)
+    
+    def _clean_expired(self):
+        """تنظيف الكوبونات المنتهية"""
+        today = datetime.now().date()
+        self.data["coupons"] = [
+            c for c in self.data["coupons"]
+            if "valid_until" not in c or 
+            datetime.fromisoformat(c["valid_until"]).date() > today
+        ]
+    
+    def _add_daily_offers(self):
+        """إضافة عروض يومية جديدة"""
+        days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"]
+        today = days[datetime.now().weekday()]
+        
+        daily_offer = {
+            "store": f"عرض {today}",
+            "code": f"WEEK{datetime.now().isocalendar()[1]}",
+            "description": f"عرض خاص ليوم {today} - خصم 20%",
+            "valid_until": (datetime.now() + timedelta(days=1)).isoformat()
+        }
+        self.data["coupons"].append(daily_offer)
+    
+    def _save_data(self):
+        """حفظ البيانات مع تنسيق جميل"""
+        self.data["metadata"]["last_updated"] = datetime.now().isoformat()
+        with open(self.data_file, "w", encoding="utf-8") as f:
+            json.dump(self.data, f, ensure_ascii=False, indent=2)
+    
+    # =====================================================
+    # 📊 تقارير التدريب
+    # =====================================================
+    
+    def get_training_report(self):
+        """
+        توليد تقرير التدريب
+        """
+        return self.separator.get_timestamped_separator(
+            level="decorated",
+            label=f"""
+📊 تقرير التدريب
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 عدد جلسات التدريب: {self.separator.training_count}
+🕐 آخر تدريب: {self.separator.last_training}
+📋 نوع التدريب: {self.separator.config['training_interval']}
+📦 عدد الكوبونات: {len(self.data['coupons'])}
+🔄 الفاصل التلقائي: {self.separator.config['auto_backup']}
+"""
+        )
+
+# =====================================================
+# 🎯 تكامل مع نظامك الحالي
+# =====================================================
+
+class SaeedLogiCSystem:
+    """
+    النظام المتكامل مع فواصل ذكية
+    """
+    
+    def __init__(self):
+        self.training_manager = TrainingManager()
+        
+    def run(self):
+        """
+        تشغيل النظام مع التدريب التلقائي
+        """
+        # تنفيذ التدريب اليومي
+        self.training_manager.daily_training_session()
+        
+        # عرض التقرير
+        print(self.training_manager.get_training_report())
+        
+        return self.training_manager.data
+
+# =====================================================
+# 🔧 الاستخدام العملي
+# =====================================================
+
+if __name__ == "__main__":
+    system = SaeedLogiCSystem()
+    result = system.run()
+    
+    # ✅ النظام جاهز للتشغيل كل يوم/أسبوع
+    print("\n✅ تم تشغيل النظام بنجاح مع الفواصل الذكية!")
