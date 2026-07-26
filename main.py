@@ -22,33 +22,29 @@ except ImportError:
     pass
 
 # =========================================================
-# 🔑 الإعدادات وتوحيد المفاتيح
+# 🔑 الإعدادات وتوحيد مفاتيح وبنية الموديلات
 # =========================================================
 
 MODEL_NAME = "gemini-3.1-flash-lite"
 GEMMA_MODEL_NAME = "gemma-4-26b-a4b-it"
 IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
 VEO_MODEL_NAME = "veo-2.0-generate-001"
-FALLBACK_MODEL_NAME = "gemini-1.5-flash"
 
-# 1. التسميات التعريفية والتسويقية (للعرض فقط)
-GEMINI_LABEL = "Gemini 3.1Flash TTS"
-AUDIO_LABEL = "emma 4.FlashLite"
+# قراءة المفاتيح من Streamlit Secrets مع خيارات الطوارئ
+GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", "")
+AUDIO_API_KEY = st.secrets.get("AUDIO_API_KEY", "")
+BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "")
+IMAGEN_API_KEY = st.secrets.get("IMAGEN_API_KEY", "")
 
-# 2. مفاتيح الـ API الحقيقية (يجب أن تبدأ بـ AIzaSy...)
-BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "AIzaSyddffccvvvvvvvvvvvggggvdggb")
-IMAGEN_API_KEY = st.secrets.get("IMAGEN_API_KEY", "AIzaSyX")
+# توحيد المفتاح النشط لجميع الموديلات
+PRIMARY_KEY = GEMINI_API_KEY or BACKUP_API_KEY
+AUDIO_KEY = AUDIO_API_KEY or PRIMARY_KEY
+IMAGEN_KEY = IMAGEN_API_KEY or PRIMARY_KEY
 
-# 3. توحيد المفتاح النشط الفعلي لعملء الاتصال
-PRIMARY_KEY = BACKUP_API_KEY
-AUDIO_KEY = BACKUP_API_KEY
-IMAGEN_KEY = IMAGEN_API_KEY if IMAGEN_API_KEY.startswith("AIza") else PRIMARY_KEY
-
-# تهيئة العملاء بالمفاتيح الحقيقية الصحيحة
+# تهيئة العملاء الموحدين
 client_main = genai.Client(api_key=PRIMARY_KEY)
 client_audio = genai.Client(api_key=AUDIO_KEY)
 client_imagen = genai.Client(api_key=IMAGEN_KEY)
-
 
 
 # =========================================================
@@ -61,7 +57,7 @@ def fix_arabic(text: str) -> str:
     return get_display(reshaped_text)
 
 def create_gemini_style_arabic_design():
-    """إنشاء غلاف وتصميم تسويقي احترافي بنمط Saeed MarketAds."""
+    """إنشاء غلاف وتصميم تسويقي احترافي بنمط Gemini."""
     W, H = 1080, 1920
     base = Image.new("RGBA", (W, H), (15, 23, 42, 255))
     
@@ -101,8 +97,8 @@ def create_gemini_style_arabic_design():
     draw.rounded_rectangle([right_x - 220, 260, right_x, 310], radius=12, fill=(99, 102, 241, 230))
     draw.text((right_x - 200, 272), badge_text, font=badge_font, fill="white")
     
-    draw.text((right_x - 550, 360), fix_arabic("عروض Saeed MarketAds"), font=title_font, fill="white")
-    draw.text((right_x - 620, 460), fix_arabic("تجربة تسوق رقمية ذكية ومتكاملة"), font=sub_font, fill=(226, 232, 240))
+    draw.text((right_x - 550, 360), fix_arabic("سماعات الذكاء الاصطناعي"), font=title_font, fill="white")
+    draw.text((right_x - 620, 460), fix_arabic("تجربة صوتية ثورية تدمج الفن بالتكنولوجيا"), font=sub_font, fill=(226, 232, 240))
     
     btn_w = 300
     btn_rect = [(W - btn_w) // 2, 1150, (W + btn_w) // 2, 1230]
@@ -172,7 +168,7 @@ def load_local_coupons():
 # =========================================================
 
 def handle_general_chat(user_input: str) -> str:
-    """العقل الحواري العام والدعم الفني (Gemini Flash Lite مع نظام الطوارئ 1.5)."""
+    """العقل الحواري العام والدعم الفني (Gemini Flash Lite)."""
     prompt = (
         f"أنت (Saeed LogiC Pro)، مساعد التسوق الذكي واللبق والمطور خصيصاً "
         f"لصالح منصة وشبكة (Saeed MarketAds) الرائدة في العروض والتسويق الرقمي.\n"
@@ -186,15 +182,8 @@ def handle_general_chat(user_input: str) -> str:
             contents=prompt
         )
         return response.text
-    except Exception:
-        try:
-            response = client_main.models.generate_content(
-                model=FALLBACK_MODEL_NAME,
-                contents=prompt
-            )
-            return response.text
-        except Exception as e:
-            return f"عذراً، تعذر الاتصال بمساعد الحوار حالياً. التفاصيل: {str(e)}"
+    except Exception as e:
+        return f"عذراً، تعذر الاتصال بمساعد الحوار حالياً. التفاصيل: {str(e)}"
 
 
 def process_coupon_with_gemma(user_input: str) -> str:
