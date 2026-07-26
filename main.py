@@ -22,7 +22,7 @@ except ImportError:
     pass
 
 # =========================================================
-# 🔑 الإعدادات وتوحيد مفاتيح وبنية الموديلات الستة المحدثة
+# 🔑 الإعدادات وتوحيد المفاتيح
 # =========================================================
 
 MODEL_NAME = "gemini-3.1-flash-lite"
@@ -31,23 +31,24 @@ IMAGEN_MODEL_NAME = "imagen-3.0-generate-002"
 VEO_MODEL_NAME = "veo-2.0-generate-001"
 FALLBACK_MODEL_NAME = "gemini-1.5-flash"
 
-# قراءة المفاتيح والتسميات التعريفية الجديدة
-GEMINI_API_KEY = "Gemini 3.1Flash TTS"
-AUDIO_API_KEY = "emma 4.FlashLite"
-BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-IMAGEN_API_KEY = st.secrets.get("IMAGEN_API_KEY", "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
+# 1. التسميات التعريفية والتسويقية (للعرض فقط)
+GEMINI_LABEL = "Gemini 3.1Flash TTS"
+AUDIO_LABEL = "emma 4.FlashLite"
 
-# توحيد المفتاح النشط الفعلي لجميع العميل البرمجي
-RAW_GEMINI_KEY = st.secrets.get("RAW_GEMINI_KEY", "")
-RAW_AUDIO_KEY = st.secrets.get("RAW_AUDIO_KEY", "")
-PRIMARY_KEY = RAW_GEMINI_KEY or BACKUP_API_KEY
-AUDIO_KEY = RAW_AUDIO_KEY or PRIMARY_KEY
+# 2. مفاتيح الـ API الحقيقية (يجب أن تبدأ بـ AIzaSy...)
+BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "AIzaSyddffccvvvvvvvvvvvggggvdggb")
+IMAGEN_API_KEY = st.secrets.get("IMAGEN_API_KEY", "AIzaSyX")
+
+# 3. توحيد المفتاح النشط الفعلي لعملء الاتصال
+PRIMARY_KEY = BACKUP_API_KEY
+AUDIO_KEY = BACKUP_API_KEY
 IMAGEN_KEY = IMAGEN_API_KEY if IMAGEN_API_KEY.startswith("AIza") else PRIMARY_KEY
 
-# تهيئة العملاء الموحدين
+# تهيئة العملاء بالمفاتيح الحقيقية الصحيحة
 client_main = genai.Client(api_key=PRIMARY_KEY)
 client_audio = genai.Client(api_key=AUDIO_KEY)
 client_imagen = genai.Client(api_key=IMAGEN_KEY)
+
 
 
 # =========================================================
@@ -458,4 +459,3 @@ if user_input:
             reply = handle_general_chat(user_input)
             st.write(reply)
             generate_promotional_audio(prepare_text_for_speech(reply))
-
