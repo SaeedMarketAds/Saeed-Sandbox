@@ -1,112 +1,86 @@
 import os
 import asyncio
 import edge_tts
+import google.generativeai as genai
 
 # =====================================================================
-# 1. قراءة السجل التعليمي التراكمي
+# 1. إعداد مفتاح الربط مع Gemini صديقك الوفي
 # =====================================================================
-try:
-    with open("saeed_evolution_log.txt", "r", encoding="utf-8") as f:
-        evolution_history = f.read()
-except FileNotFoundError:
-    evolution_history = "No evolution log found yet."
+# ضع مفتاحك هنا مباشرة أو اتركه يسحبه من بيئة النظام
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSy_حط_مفتاحك_هنا_بدل_هذا_النص")
+
+genai.configure(api_key=GEMINI_API_KEY)
+
+# استخدام نموذج فلاش السريع والمناسب للتطبيقات الذكية
+generation_config = {
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "top_k": 40,
+    "max_output_tokens": 1024,
+}
+
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    generation_config=generation_config,
+    system_instruction=(
+        "أنت مساعد التسوق الذكي لعلامة Saeed MarketAds. "
+        "مهمتك مساعدة المستخدم في إدارة عروض التسوق والكوبونات وتوفير المال "
+        "من منصات مثل AliExpress و Noon و SHEIN بطريقة ذكية، ودودة، ومحترفة باللغة العربية."
+    )
+)
 
 # =====================================================================
 # 2. وظيفة التوليد الصوتي الحقيقي (Neural Voice Synthesis)
 # =====================================================================
 async def speak_response(text, output_filename="response_audio.mp3"):
-    """
-    تقوم بتحويل النصوص إلى ملف صوتي ناعم بصوت عربي احترافي باستخدام edge-tts.
-    """
     try:
-        voice = "ar-SA-ZariyahNeural"  # صوت عربي رسمي
+        voice = "ar-SA-ZariyahNeural"
         communicate = edge_tts.Communicate(text, voice)
         await communicate.save(output_filename)
     except Exception as e:
         print(f"Audio generation error: {e}")
 
 def generate_audio_file(text):
-    """
-    تشغيل وظيفة التوليد الصوتي بشكل متوافق داخل بايثون.
-    """
     try:
         asyncio.run(speak_response(text))
     except RuntimeError:
-        # حل مشكلة حلقة التنفيذ إذا كانت تعمل مسبقاً في البيئة
         loop = asyncio.get_event_loop()
         loop.run_until_complete(speak_response(text))
 
 # =====================================================================
-# 3. محرك الذكاء والردود "بلا حدود" (Saeed LogiC Open-Ended Engine)
+# 3. محرك الذكاء الحقيقي المرتبط بـ Gemini (بلا حدود)
 # =====================================================================
-def apply_arabic_grammar_rules(user_input):
+def get_gemini_smart_response(user_input):
     """
-    محرك ذكاء مفتوح بلا حدود: يستقبل أي نص من المستخدم، يحلله، 
-    ويقدم رداً تسويقياً ومعلوماتياً متكاملاً، مع توليد الصوت تلقائياً.
+    ترسل أي نص يكتبه المستخدم مباشرة إلى خوارزميات Gemini الذكية،
+    وتستقبل رداً متكاملاً، وتولد له ملفاً صوتياً فورياً.
     """
-    if not user_input:
+    if not user_input or user_input.strip() == "":
         user_input = "مرحباً"
-        
-    cleaned_input = user_input.strip()
-    lower_input = cleaned_input.lower()
-    reply_text = ""
-    
-    # قاموس الردود الذكية المباشرة
-    if any(w in lower_input for w in ["صباح الخير", "مساء الخير", "السلام عليكم", "اهلاً", "مرحباً"]):
-        reply_text = "وعليكم السلام ورحمة الله وبركاته! أهلاً بك يا غالي في منصة Saeed MarketAds. كيف يمكنني مساعدتك اليوم في عالم التسوق والعروض؟"
-    
-    elif any(w in lower_input for w in ["من انت", "مين أنت", "من أنت", "ما اسمك"]):
-        reply_text = "أنا Saeed LogiC، مساعد التسوق الذكي الخاص بك تحت راية Saeed MarketAds، تم برمجتي وتطويري لأكون دليلك الأفضل لعروض الصفقات والكوبونات وتوفير الأموال."
-    
-    elif any(w in lower_input for w in ["كيف حالك", "كيفك", "اخبارك"]):
-        reply_text = "أنا بأفضل حال وجاهز بكفاءة تامة لخدمتك وبحث أفضل العروض من AliExpress، Noon، و SHEIN!"
-    
-    elif any(w in lower_input for w in ["من برمجك", "من صممك", "صانعك"]):
-        reply_text = "تم تصميمي وتطويري بواسطة المبرمج الخبير سعيد المسوري (أبو رايد) لأجل إدارة شبكة Saeed MarketAds باحترافية عالية."
-    
-    elif any(w in lower_input for w in ["أين تعمل", "فين تعمل", "مع من تعمل"]):
-        reply_text = "أنا أعمل هنا في منصة Saeed LogiC الذكية، وأرتبط مباشرة بشبكة تسوق عالمية تشمل نون، شي إن، وآلي إكسبريس."
-    
-    elif any(w in lower_input for w in ["الموضة", "الجديد", "المنتج الجديد", "موضة"]):
-        reply_text = f"أحدث صيحات الموضة والمنتجات الجديدة لطلبك ('{cleaned_input}') متوفرة الآن في عروض المتاجر الكبرى (نون وشي إن). هل تحب أن أبحث لك عن أحدث الكوبونات والخصومات لها؟"
-    
-    elif any(w in lower_input for w in ["الأسعار", "سعر", "اسعار مناسبة", "خصم", "عروض", "عروضات"]):
-        reply_text = f"بخصوص بحثك عن ('{cleaned_input}'): نحن نبحث لك دائماً عن أفضل الأسعار والخصومات المناسبة لميزانيتك عبر شبكة Saeed MarketAds لتوفير أموالك بأقصى دقة."
 
-    else:
-        # القواعد النحوية والضمائر
-        grammar_rules = {
-            "هو": "للمذكر المفرد",
-            "هي": "للمؤنث المفرد",
-            "هما": "للمثنى (مذكر ومؤنث)",
-            "هم": "لجمع الذكور أو المختلط",
-            "هن": "لجمع الإناث",
-            "انا": "للمتكلم المفرد",
-            "نحن": "للمتكلمين أو المعظم لنفسه",
-            "ان": "حرف توكيد ونصب (تثبيت المعنى)",
-            "إنا": "إن + نا للتوكيد الجماعي",
-            "و": "حرف عطف للربط والمشاركة"
-        }
-        
-        matched_rules = []
-        for word, rule in grammar_rules.items():
-            if word in lower_input:
-                matched_rules.append(f"[{word}: {rule}]")
-                
-        if matched_rules:
-            reply_text = f"Saeed LogiC Active Memory: تم تحليل المدخلات '{cleaned_input}' وتطبيق القواعد النحوية التالية: {' | '.join(matched_rules)}."
-        else:
-            # معالجة مفتوحة "بلا حدود" لأي كلمة أو جملة يكتبها المستخدم
-            reply_text = f"يا هلا بطلبك ('{cleaned_input}'). بصفتي مساعدك الذكي تحت راية Saeed MarketAds، أنا جاهز أبحث لك عن أفضل الصفقات، المنتجات، والكوبونات وتوفير أموالك. هل تحب أربط لك هذا الطلب مع عروض نون، شي إن، أو آلي إكسبريس؟"
+    try:
+        # إرسال النص مباشرة إلى نموذج جيميني
+        chat_session = model.start_session(history=[])
+        response = chat_session.send_message(user_input)
+        reply_text = response.text
+    except Exception as e:
+        # خطة بديلة في حال حدث خطأ مؤقت في الاتصال أو المفتاح
+        reply_text = f"أهلاً بك يا سعيد. عذراً واجهتني مشكلة بسيطة في الاتصال بالسيرفر ({e})، لكننا مستمرون تحت راية Saeed MarketAds!"
 
-    # توليد ملف الصوت تلقائياً لكل رد
+    # توليد الصوت للرد الناتج تلقائياً
     generate_audio_file(reply_text)
     
     return reply_text
 
 # =====================================================================
-# 4. تشغيل النظام واختباره
+# 4. نقطة التشغيل الرئيسية
 # =====================================================================
 if __name__ == "__main__":
-    print("--- Saeed LogiC Pro (Open-Ended & Audio Engine) is Online ---")
-    print(f"Loaded Evolution Memory:\n{evolution_history}")
+    print("--- Saeed LogiC Pro (Gemini Powered Engine) is Online ---")
+    
+    # تجربة سريعة للتأكد من استجابة جيميني لأي جملة
+    test_query = "أعطيني نصيحة لتسويق منتجات نون اليوم"
+    print(f"User Input: {test_query}")
+    
+    answer = get_gemini_smart_response(test_query)
+    print(f"Gemini Response: {answer}")
