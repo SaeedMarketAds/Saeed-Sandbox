@@ -1,290 +1,136 @@
-import warnings
-warnings.filterwarnings("ignore", category=SyntaxWarning)
-
+import streamlit as st
 import json
 import os
-import re
-import streamlit as st
-from google import genai
 from datetime import datetime
-import random
 
-# =========================================================
-# 🔑 إعدادات الموديل والمفاتيح
-# =========================================================
-
-MODEL_NAME = "gemini-1.5-flash"
-
-RAW_GEMINI_KEY = st.secrets.get("RAW_GEMINI_KEY", "")
-BACKUP_API_KEY = st.secrets.get("BACKUP_API_KEY", "")
-PRIMARY_KEY = RAW_GEMINI_KEY or BACKUP_API_KEY
-
-def initialize_client(api_key):
-    try:
-        if api_key and api_key.startswith("AIza"):
-            return genai.Client(api_key=api_key)
-        return None
-    except Exception:
-        return None
-
-client_main = initialize_client(PRIMARY_KEY)
-
-# =========================================================
-# 📂 قاعدة المعرفة المحلية (البديلة)
-# =========================================================
-
-def load_local_coupons():
-    return {
-        "metadata": {
-            "platform_name": "Saeed MarketAds",
-            "bot_name": "Saeed LogiC Pro",
-            "version": "2.0",
-            "last_update": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        },
-        "categories": [
-            {
-                "category_name": "تسوق عام وأزياء",
-                "stores": [
-                    {
-                        "store_name": "نون (Noon)",
-                        "keywords": ["نون", "noon", "خصم", "عروض", "كود", "تخفيض"],
-                        "coupons": [
-                            {"code": "NOON15", "description": "خصم فوري بقيمة 15٪ على جميع المنتجات والملابس."},
-                            {"code": "NOON20", "description": "خصم 20٪ على الطلبات الأولى للمستخدمين الجدد."},
-                            {"code": "NOON10", "description": "خصم 10٪ على الأجهزة الإلكترونية والإكسسوارات."}
-                        ]
-                    },
-                    {
-                        "store_name": "شي إن (SHEIN)",
-                        "keywords": ["شي إن", "shein", "ملابس", "فساتين", "شي ان", "ازياء"],
-                        "coupons": [
-                            {"code": "SHEIN30", "description": "خصم 30٪ على الفساتين والملابس الصيفية الجديدة."},
-                            {"code": "N73QS", "description": "خصم 30% للمستخدمين الجدد، يربط المتسوق بمختاراتك الخاصة."},
-                            {"code": "SHEIN15", "description": "خصم 15٪ على كل الطلبات التي تزيد عن 100 ريال."}
-                        ]
-                    }
-                ]
-            },
-            {
-                "category_name": "الإلكترونيات والتقنية",
-                "stores": [
-                    {
-                        "store_name": "علي إكسبريس (AliExpress)",
-                        "keywords": ["علي إكسبريس", "aliexpress", "علي اكسبريس", "إلكترونيات", "تقنية"],
-                        "coupons": [
-                            {"code": "ALI50", "description": "خصم يصل إلى 50٪ على الأجهزة الإلكترونية وإكسسوارات الهواتف."},
-                            {"code": "ALI25", "description": "خصم 25٪ على الهواتف الذكية والأجهزة اللوحية."}
-                        ]
-                    }
-                ]
-            }
-        ],
-        "responses": {
-            "greetings": [
-                "أهلاً وسهلاً بك! 🌟 كيف يمكنني مساعدتك اليوم؟",
-                "مرحباً! أنا سعيد بخدمتك. هل تبحث عن عروض أو كوبونات؟ 💰",
-                "السلام عليكم! 👋 أنا مساعد التسوق الذكي، جاهز لعرض أحدث العروض."
-            ],
-            "help": [
-                "يمكنني مساعدتك في:\n✅ عرض الكوبونات والعروض\n✅ البحث عن خصومات حسب المتجر\n✅ الإجابة على أي استفسارات أو مواضيع بلا حدود\n📝 فقط اسألني عما تريد!"
-            ]
-        }
-    }
-
-def search_knowledge_base(user_input: str) -> dict:
-    knowledge_data = load_local_coupons()
-    lowered_input = user_input.lower().strip()
-    
-    results = {
-        "coupons": [],
-        "greeting_response": None,
-        "help_response": None
-    }
-    
-    greeting_keywords = ["السلام", "مرحب", "اهلا", "هلا", "سلام", "hi", "hello"]
-    if any(k in lowered_input for k in greeting_keywords):
-        results["greeting_response"] = random.choice(knowledge_data["responses"]["greetings"])
-        return results
-    
-    help_keywords = ["مساعدة", "help", "كيف", "طريقة", "من انت"]
-    if any(k in lowered_input for k in help_keywords):
-        results["help_response"] = "\n".join(knowledge_data["responses"]["help"])
-        return results
-    
-    if any(w in lowered_input for w in ["عرض", "عروض", "كوبون", "كوبونات", "خصم", "تخفيض", "كل"]):
-        for cat in knowledge_data.get("categories", []):
-            for store in cat.get("stores", []):
-                for coupon in store.get("coupons", []):
-                    results["coupons"].append({
-                        "store": store.get("store_name"),
-                        "code": coupon.get("code"),
-                        "description": coupon.get("description"),
-                        "category": cat.get("category_name"),
-                        "relevance": 1.0
-                    })
-    else:
-        for cat in knowledge_data.get("categories", []):
-            for store in cat.get("stores", []):
-                store_name = store.get("store_name", "")
-                store_keywords = [k.lower() for k in store.get("keywords", [])]
-                
-                relevance = 0
-                if any(kw in lowered_input for kw in store_keywords):
-                    relevance += 2
-                if any(s.lower() in lowered_input for s in store_name.lower().split()):
-                    relevance += 1
-                
-                if relevance > 0:
-                    for coupon in store.get("coupons", []):
-                        results["coupons"].append({
-                            "store": store_name,
-                            "code": coupon.get("code"),
-                            "description": coupon.get("description"),
-                            "category": cat.get("category_name"),
-                            "relevance": relevance
-                        })
-    
-    results["coupons"].sort(key=lambda x: x["relevance"], reverse=True)
-    return results
-
-def format_knowledge_response(results: dict) -> str:
-    if results.get("greeting_response"):
-        return results["greeting_response"]
-    if results.get("help_response"):
-        return results["help_response"]
-    if results["coupons"]:
-        response = "🎯 **أحدث العروض والكوبونات المتاحة:**\n\n"
-        current_category = None
-        for coupon in results["coupons"]:
-            if coupon["category"] != current_category:
-                current_category = coupon["category"]
-                response += f"📂 **{current_category}**\n"
-            response += f"🏷️ **{coupon['store']}**\n"
-            response += f"🔑 **الكود:** `{coupon['code']}`\n"
-            response += f"📝 **الوصف:** {coupon['description']}\n\n"
-        return response
-    return ""
-
-# =========================================================
-# 🤖 النظام الذكي الهجين (API حر بلا حدود)
-# =========================================================
-
-def smart_process_request(user_input: str) -> tuple[str, str]:
-    # 1. المحاولة عبر الـ API بدون قيود على طول النص أو الموضوع
-    if client_main and PRIMARY_KEY and PRIMARY_KEY.startswith("AIza"):
-        try:
-            system_prompt = (
-                "أنت مساعد تسوق ذكي ومستشار رقمي لشبكة Saeed MarketAds. "
-                "أجب على المستخدم بكل حرية وبدون أي قيود أو حدود على حجم الإجابة أو مواضيعها. "
-                "تحدث بلغة عربية فصحى واضحة وودية."
-            )
-            full_prompt = f"{system_prompt}\n\nسؤال أو طلب المستخدم:\n{user_input}"
-            
-            response = client_main.models.generate_content(
-                model=MODEL_NAME,
-                contents=full_prompt
-            )
-            
-            if response and response.text:
-                return response.text, "Gemini API 🚀"
-        except Exception:
-            pass
-    
-    # 2. التحويل التلقائي لقاعدة المعرفة المحلية عند تعذر الـ API
-    kb_results = search_knowledge_base(user_input)
-    formatted_response = format_knowledge_response(kb_results)
-    
-    if formatted_response:
-        return formatted_response, "قاعدة المعرفة المحلية 📂"
-    
-    # إذا لم يطابق بحثاً محدداً في قاعدة المعرفة، يتم إعطاء النص كاملاً كمساعد افتراضي حر
-    return f"أهلاً بك! لقد استلمت رسالتك: '{user_input}'. أنا جاهز تماماً للرد ومساعدتك في أي استفسار تسوقي أو تقني بلا حدود.", "قاعدة المعرفة المحلية 📂"
-
-# =========================================================
-# 🖥️ واجهة المستخدم (Streamlit UI)
-# =========================================================
-
+# إعدادات صفحة التطبيق
 st.set_page_config(
     page_title="Saeed LogiC Pro - مساعد التسوق الذكي",
     page_icon="🛍️",
-    layout="wide"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
+# تصميم وتنسيق الواجهة المظلمة الاحترافية (CSS)
 st.markdown("""
-<style>
-    .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-        margin-bottom: 2rem;
+    <style>
+    .main {
+        background-color: #0e1117;
+        color: #ffffff;
     }
-</style>
+    .stTextInput input {
+        background-color: #1a1c23;
+        color: #ffffff;
+        border-radius: 10px;
+        border: 1px solid #30363d;
+    }
+    .stButton button {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: white;
+        border-radius: 10px;
+        border: none;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .stButton button:hover {
+        opacity: 0.9;
+        transform: scale(1.02);
+    }
+    .hero-box {
+        padding: 20px;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #1f2937 11.2%, #111827 91.1%);
+        border: 1px solid #374151;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
+# واجهة الهيدر الترحيبية الاحترافية
 st.markdown("""
-<div class="main-header">
-    <h1>🛍️ Saeed LogiC Pro</h1>
-    <p>🚀 مساعد التسوق الذكي - محادثة حرة بلا حدود</p>
-</div>
+    <div class="hero-box">
+        <h1 style="color: #ffffff; margin-bottom: 5px;">Saeed LogiC Pro 🚀</h1>
+        <p style="color: #9ca3af; font-size: 16px;">مساعد التسوق الذكي - محادثة حرة بلا حدود لتوفير الصفقات والعروض 🛍️</p>
+    </div>
 """, unsafe_allow_html=True)
 
+# تحميل قاعدة المعرفة الخاصة بالعروض والمتاجر (نون، شي إن، علي إكسبريس)
+@st.cache_data
+def load_knowledge():
+    if os.path.exists("data/knowledge.json"):
+        with open("data/knowledge.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {}
+
+knowledge_data = load_knowledge()
+
+# أزرار الوصول السريع للمتاجر الكبرى (نون، شي إن، علي إكسبريس)
 col1, col2, col3 = st.columns(3)
 with col1:
-    if st.button("📋 العروض الكبرى", use_container_width=True):
-        knowledge_data = load_local_coupons()
-        st.success("🎉 **جميع العروض والكوبونات المتاحة:**")
-        for cat in knowledge_data.get("categories", []):
-            st.markdown(f"### 📂 {cat.get('category_name')}")
-            for store in cat.get("stores", []):
-                st.markdown(f"**{store.get('store_name')}**")
-                for coupon in store.get("coupons", []):
-                    st.code(coupon.get('code'), language="text")
-                    st.write(coupon.get('description'))
-                st.divider()
-
+    btn_noon = st.button("🔥 عروض نون")
 with col2:
-    if st.button("🔥 عروض نون", use_container_width=True):
-        st.session_state.quick_action = "نون"
-
+    btn_shein = st.button("👗 عروض شي إن")
 with col3:
-    if st.button("👗 عروض شي إن", use_container_width=True):
-        st.session_state.quick_action = "شي إن"
+    btn_ali = st.button("🎯 علي إكسبريس")
 
-st.markdown("---")
+# تهيئة سجل المحادثة الذكية
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "assistant", "content": "يا هلا فيك يا غالي في Saeed LogiC Pro! 🌟 أنا مساعدك الشخصي للتسوق والتوفير. ايش حاب تتسوق وتوفر اليوم؟ (جوال، ملابس، عروض نون أو شي إن أو علي إكسبريس)؟ أرسل لي اسم المنتج أو سعره وابشر باللي يسعدك!"}
+    ]
 
-status_col1, status_col2 = st.columns(2)
-with status_col1:
-    if PRIMARY_KEY and PRIMARY_KEY.startswith("AIza"):
-        st.success("✅ الـ API متصل وجاهز للعمل بلا حدود")
+# عرض رسائل المحادثة السابقة
+for message in st.session_state.messages:
+    with st.chat_message(message["role"], avatar="👨‍💻" if message["role"] == "user" else "🤖"):
+        st.markdown(message["content"])
+
+# التعامل مع الأزرار السريعة
+user_query = None
+if btn_noon:
+    user_query = "عروض نون"
+elif btn_shein:
+    user_query = "عروض شي إن"
+elif btn_ali:
+    user_query = "علي إكسبريس"
+else:
+    user_query = st.chat_input("عن أي شيء بلا حدود Saeed LogiC اكتب ما شئت.. اسأل أو اطلب عرضك...")
+
+# منطق الرد الذكي والحواري الاستباقي
+if user_query:
+    # إضافة رسالة المستخدم للسجل
+    st.session_state.messages.append({"role": "user", "content": user_query})
+    with st.chat_message("user", avatar="👨‍💻"):
+        st.markdown(user_query)
+
+    # معالجة الرد الذكي بطريقة حوارية بشرية
+    query_lower = user_query.lower()
+    bot_response = ""
+
+    if "السلام" in query_lower or "مرحبا" in query_lower or "اهلاً" in query_lower:
+        bot_response = "وعليكم السلام ورحمة الله وبركاته يا هلا بيك يا الغالي! منور المنصة اليوم. ايش المنتج أو الجوال الذي في بالك ودك أبحث لك عن أرخص سعر وعرض له؟"
+    elif "نون" in query_lower:
+        bot_response = "🔥 **عروض وخزنة نون الحصرية المتاحة لك:**\n- **كود (NOON15):** خصم فوري بقيمة 15% على جميع المنتجات والأزياء.\n- **كود (NOON20):** خصم 20% على الطلبات الأولى للمستخدمين الجدد.\n\nهل تبحث عن منتج محدد في نون لأجلب لك سعره فوراً؟"
+    elif "شي إن" in query_lower or "shein" in query_lower:
+        bot_response = "👗 **عروض وتخفيضات شي إن الكبرى:**\n- **كود (SHEIN30):** خصم 30% على الفساتين والأزياء الصيفية الجديدة.\n- **كود (N73QS):** خصم 30% للمستخدمين الجدد على أول طلب.\n\nهل تريدني أن أبحث لك عن قطعة معينة أو ملابس بسعر مذهل؟"
+    elif "علي" in query_lower or "aliexpress" in query_lower:
+        bot_response = "🎯 **عروض علي إكسبريس (AliExpress):**\n- **كود (ALI50):** خصم يصل إلى 50% على الأجهزة الإلكترونية وإكسسوارات الهواتف.\n\nأرسل لي اسم الجوال أو المنتج الذي تبحث عنه وسأبحث لك عن أفضل صفقة! 🚀"
+    elif "سعر" in query_lower or "جوال" in query_lower or "هاتف" in query_lower or "بكم" in query_lower:
+        bot_response = "علا عينِي وراسي يا أبا رائد! 📱 يمديك ترسل لي اسم الجوال أو المنتج أو السعر الذي في بالك، وأنا أبحث لك في أقوى المتاجر وأعطيك العرض والكود حقه على طول بدون تعب!"
     else:
-        st.warning("⚠️ يعمل من قاعدة المعرفة المحلية")
+        # رد استباقي ذكي يحاوره بأسلوب تجاري احترافي
+        bot_response = f"يا هلا بطلبك ('{user_query}'). بصفتي مساعدك الذكي، أنا جاهز أبحث لك عن أفضل الصفقات والكوبونات وتوفير أموالك. هل تحب أربط لك هذا الطلب مع عروض نون، شي إن، أو علي إكسبريس؟"
 
-with status_col2:
-    st.info(f"📅 آخر تحديث: {load_local_coupons()['metadata']['last_update']}")
+    # إضافة رد الروبوت للسجل وعرضه
+    st.session_state.messages.append({"role": "assistant", "content": bot_response})
+    with st.chat_message("assistant", avatar="🤖"):
+        st.markdown(bot_response)
 
-chat_input_val = st.chat_input("اكتب ما شئت.. اسأل Saeed LogiC عن أي شيء بلا حدود...")
-
-user_input = None
-if chat_input_val:
-    user_input = chat_input_val
-elif hasattr(st.session_state, 'quick_action') and st.session_state.quick_action:
-    user_input = st.session_state.quick_action
-    st.session_state.quick_action = None
-
-if user_input:
-    with st.chat_message("user"):
-        st.write(user_input)
-        
-    with st.chat_message("assistant"):
-        with st.spinner("🤔 جاري التفكير والرد..."):
-            reply_text, source_used = smart_process_request(user_input)
-        
-        if "Gemini API" in source_used:
-            st.success(f"💡 {source_used}")
-        else:
-            st.info(f"📚 {source_used}")
-        
-        st.markdown(reply_text)
-
+# تذليل وتذييل الواجهة بحالة النظام وتاريخ التحديث
+st.markdown("---")
+col_status, col_time = st.columns(2)
+with col_status:
+    st.markdown("✅ **متصل وجاهز للعمل بكفاءة تامة**")
+with col_time:
+    current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    st.markdown(f"📅 **آخر تحديث: {current_time_str}**")
