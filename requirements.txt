@@ -1,7 +1,7 @@
 arabic-reshaper
 colorama
 edge-tts
-​google-genai
+google-genai
 moviepy
 pillow
 python-bidi
