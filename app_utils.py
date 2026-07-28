@@ -56,18 +56,17 @@ def generate_audio(text):
         return None
 
 # ===================================================================
-# 3. محرك الذكاء (Gemini + Knowledge + Corrections)
+# 3. محرك الذكاء (Gemini SDK الجديد + Knowledge + Corrections)
 # ===================================================================
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_API_KEY_HERE")
 use_gemini = False
-model = None
+client = None
 
 if GEMINI_API_KEY != "YOUR_API_KEY_HERE":
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        from google import genai
+        client = genai.Client(api_key=GEMINI_API_KEY)
         use_gemini = True
     except:
         pass
@@ -89,7 +88,7 @@ def fallback_reply(user_input):
         return f"يا هلا بطلبك ('{user_input}'). أنا جاهز أبحث عن أفضل الصفقات. هل تحب تربط هذا الطلب مع نون، شي إن، أو علي إكسبريس؟"
 
 def get_ai_reply(user_input):
-    """توليد رد ذكي باستخدام Gemini (مع السياق والكوبونات والتصحيحات)"""
+    """توليد رد ذكي باستخدام Gemini SDK الجديد (مع السياق والكوبونات والتصحيحات)"""
     # تحضير الكوبونات
     coupons_text = ""
     for merchant, data in knowledge.get("merchants", {}).items():
@@ -111,7 +110,7 @@ def get_ai_reply(user_input):
     prompt = f"""
 أنت Saeed LogiC، مساعد تسوق ذكي تحت ماركة Saeed MarketAds.
 مهمتك: مساعدة المستخدم في العثور على أفضل العروض والكوبونات من نون، شي إن، علي إكسبريس.
-أنت تتحدث بالعامية الخليجية الفصحى، ودود، ومفيد.
+أنت تتحدث بالعامية الخليجية، ودود، ومفيد.
 
 سياق المحادثة الأخيرة:
 {context}
@@ -128,8 +127,11 @@ def get_ai_reply(user_input):
 """
 
     try:
-        if use_gemini and model:
-            response = model.generate_content(prompt)
+        if use_gemini and client:
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=prompt
+            )
             reply = response.text.strip()
         else:
             reply = fallback_reply(user_input)
