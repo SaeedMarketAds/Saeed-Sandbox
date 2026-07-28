@@ -1,145 +1,39 @@
 {
-  "metadata": {
-    "platform_name": "Saeed MarketAds",
-    "bot_name": "Saeed LogiC Pro Enterprise",
-    "version": "3.0.0 - Extended Smart Training",
-    "last_updated": "2026-07-26",
-    "training_config": {
-      "training_mode": "adaptive",
-      "default_interval": "daily",
-      "allowed_intervals": ["hourly", "daily", "weekly", "monthly"],
-      "auto_backup": true,
-      "max_version_history": 50,
-      "smart_cleanup_expired": true
+  "merchants": {
+    "noon": {
+      "api_key": "noon_api_key_here",
+      "api_url": "https://api.noon.com/v1",
+      "country": "saudi",
+      "categories": ["electronics", "fashion", "beauty"],
+      "coupons": ["SAVE20", "NOON10"]
+    },
+    "shein": {
+      "api_key": "shein_api_key_here",
+      "api_url": "https://api.shein.com/v2",
+      "country": "saudi",
+      "categories": ["women", "men", "kids"],
+      "coupons": ["SHEIN15", "NEW10"]
+    },
+    "aliexpress": {
+      "api_key": "aliexpress_api_key_here",
+      "api_url": "https://api.aliexpress.com/v3",
+      "country": "saudi",
+      "categories": ["phones", "accessories", "home"],
+      "coupons": ["AE10", "SUMMER5"]
     }
   },
-  "system_responses": {
-    "greeting": "أهلاً بك! أنا مساعد التسوق الذكي واللبق لشبكة Saeed MarketAds. كيف يمكنني مساعدتك في العثور على أقوى العروض اليوم؟",
-    "unknown_query": "أنا مبرمج للإجابة فقط على قاعدة البيانات الخاصة بالعروض والكوبونات، وللأسف لا أملك إجابة على هذا السؤال حالياً. يمكنك زيارة موقعنا للاطلاع على المزيد من العروض.",
-    "thanks": "العفو! يسعدني أن أكون قد ساعدتك. استمتع بتسوق ذكي مع Saeed MarketAds."
+  "seasonal_offers": {
+    "black_friday": "2026-11-28",
+    "summer_sale": "2026-07-01"
   },
-  "bot_dialogue": {
-    "مرحباً": "أهلاً بك! كيف يمكنني مساعدتك؟",
-    "السلام عليكم": "وعليكم السلام ورحمة الله وبركاته",
-    "ما اسمك": "اسمي Saeed LogiC، مساعد التسوق",
-    "كيف حالك": "أنا بخير، شكراً للسؤال! كيف يمكنني خدمتك؟",
-    "من أنت": "أنا مساعد التسوق الخاص بـ Saeed MarketAds",
-    "ما الفائدة منك": "أقوم بتوفير أموالك ووقتك عبر تتبع الكوبونات الحصرية لمتاجر التسوق الكبرى وتجهيزها لك فوراً.",
-    "من هو سعيد المسوري": "سعيد المسوري (أبو رائد) هو مطور هذا النظام ومؤسس Saeed MarketAds للتسويق بالعمولة والأتمتة البرمجية الذكية."
+  "user_preferences": {
+    "language": "arabic",
+    "currency": "SAR",
+    "favorite_brand": "Apple"
   },
-  "categories": [
-    {
-      "category_id": "cat_shopping_general",
-      "category_name": "تسوق عام وأزياء",
-      "description": "عروض وكوبونات عامة للمتاجر الكبرى والملابس",
-      "keywords": ["تسوق", "عروض", "متاجر", "خصومات", "كوبونات", "ملابس", "فستان", "أزياء"],
-      "stores": [
-        {
-          "store_id": "store_noon",
-          "store_name": "نون (Noon)",
-          "description": "منصة التسوق الرائدة في الشرق الأوسط",
-          "keywords": ["نون", "noon", "خصم نون", "كود نون", "عروض نون"],
-          "coupons": [
-            {
-              "coupon_id": "noon_15_all",
-              "code": "NOON15",
-              "description": "خصم فوري بقيمة 15٪ على جميع المنتجات والملابس عند الدفع.",
-              "valid_until": "2026-12-31",
-              "usage_limit": "multiple_use"
-            },
-            {
-              "coupon_id": "noon_new_user_20",
-              "code": "NOONNEW",
-              "description": "خصم 20٪ للعملاء الجدد بحد أقصى 50 ريال.",
-              "valid_until": "2026-12-31",
-              "usage_limit": "one_time_per_user"
-            }
-          ]
-        },
-        {
-          "store_id": "store_shein",
-          "store_name": "شي إن (SHEIN)",
-          "description": "أزياء عالمية بأسعار معقولة",
-          "keywords": ["شي إن", "shein", "كود شي إن", "عروض شي إن", "ملابس", "فساتين", "شي ان"],
-          "coupons": [
-            {
-              "coupon_id": "shein_30_all",
-              "code": "SHEIN30",
-              "description": "خصم 30٪ على الفساتين والملابس الصيفية الجديدة.",
-              "valid_until": "2026-08-15",
-              "usage_limit": "multiple_use"
-            },
-            {
-              "coupon_id": "shein_new_n73qs",
-              "code": "N73QS",
-              "description": "خصم 30% للمستخدمين الجدد، يربط المتسوق بمختاراتك الخاصة عند أول طلب.",
-              "valid_until": "2026-12-31",
-              "usage_limit": "one_time_per_user"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "category_id": "cat_home_electronics",
-      "category_name": "الإلكترونيات والأجهزة الذكية",
-      "description": "عروض الأجهزة، الهواتف، والتقنية الحديثة",
-      "keywords": ["إلكترونيات", "أجهزة", "جوالات", "ساعات", "تقنية", "هواتف"],
-      "stores": [
-        {
-          "store_id": "store_aliexpress",
-          "store_name": "علي إكسبريس (AliExpress)",
-          "description": "موقع تسوق عالمي شامل للأجهزة والتقنية",
-          "keywords": ["علي إكسبريس", "aliexpress", "علي اكسبريس", "إلكترونيات"],
-          "coupons": [
-            {
-              "coupon_id": "alx_50_off",
-              "code": "ALI50",
-              "description": "خصم يصل إلى 50٪ على الأجهزة الإلكترونية وإكسسوارات الهواتف.",
-              "valid_until": "2026-09-01",
-              "usage_limit": "multiple_use"
-            }
-          ]
-        },
-        {
-          "store_id": "store_jarir",
-          "store_name": "مكتبة جرير (Jarir Bookstore)",
-          "description": "رائد الحواسيب، الهواتف الذكية، والكتب",
-          "keywords": ["جرير", "jarir", "لابتوب", "آيفون"],
-          "coupons": [
-            {
-              "coupon_id": "jarir_tech_10",
-              "code": "JARIRTECH",
-              "description": "خصم 10% على إلكترونيات مختارة وملحقات الكمبيوتر.",
-              "valid_until": "2026-10-15",
-              "usage_limit": "multiple_use"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "category_id": "cat_beauty_health",
-      "category_name": "التجميل والعناية الشخصية",
-      "description": "منتجات العناية بالبشرة، العطور، ومستحضرات التجميل",
-      "keywords": ["مكياج", "عطور", "تجميل", "عناية", "صحة", "بشرة"],
-      "stores": [
-        {
-          "store_id": "store_sephora",
-          "store_name": "سيفورا (Sephora)",
-          "description": "وجهتك الأولى لعالم التجميل والمكياج الفاخر",
-          "keywords": ["سيفورا", "sephora", "مكياج", "عطورات"],
-          "coupons": [
-            {
-              "coupon_id": "sephora_glow_15",
-              "code": "GLOW15",
-              "description": "خصم 15% على كافة منتجات المكياج والعطور الأصلية.",
-              "valid_until": "2026-11-30",
-              "usage_limit": "multiple_use"
-            }
-          ]
-        }
-      ]
-    }
-  ]
+  "system_settings": {
+    "debug_mode": false,
+    "max_history": 10,
+    "audio_enabled": true
+  }
 }
