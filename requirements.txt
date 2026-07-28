@@ -1,9 +1,10 @@
 arabic-reshaper
+colorama
 edge-tts
-google-genai
+google-generativeai
 moviepy
 pillow
 python-bidi
 requests
+rich
 streamlit
-
