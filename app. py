@@ -1,13 +1,8 @@
-hereimport streamlit as st
+import streamlit as st
 import os
-from app_utils import (
-    get_ai_reply, generate_audio, memory, corrections, 
-    knowledge, save_conversation
-)
+from datetime import datetime
 
-# ===================================================================
-# إعدادات الصفحة والتصميم (كما كانت)
-# ===================================================================
+# يجب أن يكون هذا الأمر أولاً!
 st.set_page_config(
     page_title="Saeed LogiC Pro",
     page_icon="🤖",
@@ -15,6 +10,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# استيراد الدوال من app_utils (تأكد أن app_utils لا يستورد streamlit)
+from app_utils import (
+    get_ai_reply, generate_audio, memory, corrections,
+    knowledge, save_conversation
+)
+
+# ===================================================================
+# تنسيقات CSS للواجهة الداكنة
+# ===================================================================
 st.markdown("""
 <style>
     .stApp { background-color: #0e1117; }
@@ -25,7 +29,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===================================================================
-# الشريط الجانبي (Sidebar)
+# الشريط الجانبي
 # ===================================================================
 with st.sidebar:
     st.image("https://via.placeholder.com/150/0e1117/6366f1?text=Saeed", width=150)
