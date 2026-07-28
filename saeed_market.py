@@ -1,36 +1,17 @@
 import os
 import asyncio
 import edge_tts
-import google.generativeai as genai
+from google import genai
 
 # =====================================================================
-# 1. إعداد مفتاح الربط مع Gemini صديقك الوفي
+# 1. إعداد مفتاح الربط مع Gemini
 # =====================================================================
-# ضع مفتاحك هنا مباشرة أو اتركه يسحبه من بيئة النظام
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSy_حط_مفتاحك_هنا_بدل_هذا_النص")
 
-genai.configure(api_key=GEMINI_API_KEY)
-
-# استخدام نموذج فلاش السريع والمناسب للتطبيقات الذكية
-generation_config = {
-    "temperature": 0.7,
-    "top_p": 0.95,
-    "top_k": 40,
-    "max_output_tokens": 1024,
-}
-
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    generation_config=generation_config,
-    system_instruction=(
-        "أنت مساعد التسوق الذكي لعلامة Saeed MarketAds. "
-        "مهمتك مساعدة المستخدم في إدارة عروض التسوق والكوبونات وتوفير المال "
-        "من منصات مثل AliExpress و Noon و SHEIN بطريقة ذكية، ودودة، ومحترفة باللغة العربية."
-    )
-)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # =====================================================================
-# 2. وظيفة التوليد الصوتي الحقيقي (Neural Voice Synthesis)
+# 2. وظيفة التوليد الصوتي (Neural Voice Synthesis)
 # =====================================================================
 async def speak_response(text, output_filename="response_audio.mp3"):
     try:
@@ -48,7 +29,7 @@ def generate_audio_file(text):
         loop.run_until_complete(speak_response(text))
 
 # =====================================================================
-# 3. محرك الذكاء الحقيقي المرتبط بـ Gemini (بلا حدود)
+# 3. محرك الذكاء المرتبط بـ Gemini SDK الجديد
 # =====================================================================
 def get_gemini_smart_response(user_input):
     """
@@ -58,13 +39,25 @@ def get_gemini_smart_response(user_input):
     if not user_input or user_input.strip() == "":
         user_input = "مرحباً"
 
+    system_instruction = (
+        "أنت مساعد التسوق الذكي لعلامة Saeed MarketAds. "
+        "مهمتك مساعدة المستخدم في إدارة عروض التسوق والكوبونات وتوفير المال "
+        "من منصات مثل AliExpress و Noon و SHEIN بطريقة ذكية، ودودة، ومحترفة باللغة العربية."
+    )
+
     try:
-        # إرسال النص مباشرة إلى نموذج جيميني
-        chat_session = model.start_session(history=[])
-        response = chat_session.send_message(user_input)
-        reply_text = response.text
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=user_input,
+            config={
+                "system_instruction": system_instruction,
+                "temperature": 0.7,
+                "top_p": 0.95,
+                "max_output_tokens": 1024,
+            }
+        )
+        reply_text = response.text.strip()
     except Exception as e:
-        # خطة بديلة في حال حدث خطأ مؤقت في الاتصال أو المفتاح
         reply_text = f"أهلاً بك يا سعيد. عذراً واجهتني مشكلة بسيطة في الاتصال بالسيرفر ({e})، لكننا مستمرون تحت راية Saeed MarketAds!"
 
     # توليد الصوت للرد الناتج تلقائياً
@@ -78,7 +71,6 @@ def get_gemini_smart_response(user_input):
 if __name__ == "__main__":
     print("--- Saeed LogiC Pro (Gemini Powered Engine) is Online ---")
     
-    # تجربة سريعة للتأكد من استجابة جيميني لأي جملة
     test_query = "أعطيني نصيحة لتسويق منتجات نون اليوم"
     print(f"User Input: {test_query}")
     
