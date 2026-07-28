@@ -8,3 +8,5 @@ python-bidi
 requests
 rich
 streamlit
+google-generativeai>=0.8.3
+edge-tts>=6.1.9
