@@ -1,136 +1,193 @@
-import streamlit as st
-import json
 import os
+import json
+import asyncio
+import edge_tts
+from colorama import init, Fore, Style
+from rich.console import Console
+from rich.panel import Panel
+from rich.markdown import Markdown
 from datetime import datetime
 
-# إعدادات صفحة التطبيق
-st.set_page_config(
-    page_title="Saeed LogiC Pro - مساعد التسوق الذكي",
-    page_icon="🛍️",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
+# تهيئة الألوان (Windows/Linux)
+init(autoreset=True)
+console = Console()
 
-# تصميم وتنسيق الواجهة المظلمة الاحترافية (CSS)
-st.markdown("""
-    <style>
-    .main {
-        background-color: #0e1117;
-        color: #ffffff;
-    }
-    .stTextInput input {
-        background-color: #1a1c23;
-        color: #ffffff;
-        border-radius: 10px;
-        border: 1px solid #30363d;
-    }
-    .stButton button {
-        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        color: white;
-        border-radius: 10px;
-        border: none;
-        font-weight: bold;
-        transition: 0.3s;
-    }
-    .stButton button:hover {
-        opacity: 0.9;
-        transform: scale(1.02);
-    }
-    .hero-box {
-        padding: 20px;
-        border-radius: 15px;
-        background: linear-gradient(135deg, #1f2937 11.2%, #111827 91.1%);
-        border: 1px solid #374151;
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# ============================
+# 1. تحميل الذاكرة والتاريخ
+# ============================
+MEMORY_FILE = "conversation.json"
+ERROR_LOG_FILE = "error_corrections.json"
 
-# واجهة الهيدر الترحيبية الاحترافية
-st.markdown("""
-    <div class="hero-box">
-        <h1 style="color: #ffffff; margin-bottom: 5px;">Saeed LogiC Pro 🚀</h1>
-        <p style="color: #9ca3af; font-size: 16px;">مساعد التسوق الذكي - محادثة حرة بلا حدود لتوفير الصفقات والعروض 🛍️</p>
-    </div>
-""", unsafe_allow_html=True)
-
-# تحميل قاعدة المعرفة الخاصة بالعروض والمتاجر (نون، شي إن، علي إكسبريس)
-@st.cache_data
-def load_knowledge():
-    if os.path.exists("data/knowledge.json"):
-        with open("data/knowledge.json", "r", encoding="utf-8") as f:
+def load_memory():
+    try:
+        with open(MEMORY_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    return {}
+    except:
+        return {"history": []}
 
-knowledge_data = load_knowledge()
+def save_memory(data):
+    with open(MEMORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
-# أزرار الوصول السريع للمتاجر الكبرى (نون، شي إن، علي إكسبريس)
-col1, col2, col3 = st.columns(3)
-with col1:
-    btn_noon = st.button("🔥 عروض نون")
-with col2:
-    btn_shein = st.button("👗 عروض شي إن")
-with col3:
-    btn_ali = st.button("🎯 علي إكسبريس")
+def load_corrections():
+    try:
+        with open(ERROR_LOG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {}
 
-# تهيئة سجل المحادثة الذكية
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "يا هلا فيك يا غالي في Saeed LogiC Pro! 🌟 أنا مساعدك الشخصي للتسوق والتوفير. ايش حاب تتسوق وتوفر اليوم؟ (جوال، ملابس، عروض نون أو شي إن أو علي إكسبريس)؟ أرسل لي اسم المنتج أو سعره وابشر باللي يسعدك!"}
-    ]
+def save_corrections(corr):
+    with open(ERROR_LOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(corr, f, ensure_ascii=False, indent=2)
 
-# عرض رسائل المحادثة السابقة
-for message in st.session_state.messages:
-    with st.chat_message(message["role"], avatar="👨‍💻" if message["role"] == "user" else "🤖"):
-        st.markdown(message["content"])
+memory = load_memory()
+corrections = load_corrections()
 
-# التعامل مع الأزرار السريعة
-user_query = None
-if btn_noon:
-    user_query = "عروض نون"
-elif btn_shein:
-    user_query = "عروض شي إن"
-elif btn_ali:
-    user_query = "علي إكسبريس"
+# ============================
+# 2. توليد الصوت
+# ============================
+async def speak_response(text, filename="response.mp3"):
+    try:
+        voice = "ar-SA-ZariyahNeural"
+        communicate = edge_tts.Communicate(text, voice)
+        await communicate.save(filename)
+        console.print(f"[green]✔️ تم توليد الصوت في {filename}[/green]")
+    except Exception as e:
+        console.print(f"[red]❌ خطأ في الصوت: {e}[/red]")
+
+def generate_audio(text):
+    try:
+        asyncio.run(speak_response(text))
+    except RuntimeError:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.create_task(speak_response(text))
+        else:
+            loop.run_until_complete(speak_response(text))
+
+# ============================
+# 3. محرك الذكاء (Gemini + Knowledge)
+# ============================
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "YOUR_API_KEY_HERE")
+
+if GEMINI_API_KEY != "YOUR_API_KEY_HERE":
+    import google.generativeai as genai
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
-    user_query = st.chat_input("عن أي شيء بلا حدود Saeed LogiC اكتب ما شئت.. اسأل أو اطلب عرضك...")
+    model = None
+    console.print("[yellow]⚠️ لم يتم تعيين مفتاح Gemini، سيُستخدم المحرك الاحتياطي.[/yellow]")
 
-# منطق الرد الذكي والحواري الاستباقي
-if user_query:
-    # إضافة رسالة المستخدم للسجل
-    st.session_state.messages.append({"role": "user", "content": user_query})
-    with st.chat_message("user", avatar="👨‍💻"):
-        st.markdown(user_query)
+def load_knowledge():
+    """تحميل قاعدة المعرفة من knowledge.json"""
+    try:
+        with open("knowledge.json", "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {"merchants": {}}
 
-    # معالجة الرد الذكي بطريقة حوارية بشرية
-    query_lower = user_query.lower()
-    bot_response = ""
+def generate_intelligent_response(user_input):
+    """توليد رد ذكي باستخدام Gemini مع دمج قاعدة المعرفة والتصحيحات"""
+    # 1. تحميل قاعدة المعرفة
+    knowledge = load_knowledge()
+    
+    # 2. استخراج الكوبونات
+    coupons_text = ""
+    for merchant, data in knowledge.get("merchants", {}).items():
+        if data.get("coupons"):
+            coupons_text += f"\n🎫 كوبونات {merchant}: {', '.join(data['coupons'])}"
+    
+    # 3. بناء السياق من آخر 5 محادثات
+    context = "\n".join([f"س: {h['user']}\nج: {h['bot']}" for h in memory["history"][-5:]])
+    
+    # 4. إضافة التصحيحات السابقة
+    corrections_text = ""
+    for wrong, correct in corrections.items():
+        corrections_text += f"تصحيح: عندما قلت '{wrong}' كان الأفضل أن أقول '{correct}'.\n"
+    
+    # 5. بناء الـ Prompt الكامل
+    prompt = f"""
+أنت Saeed LogiC، مساعد تسوق ذكي تحت ماركة Saeed MarketAds.
+مهمتك: مساعدة المستخدم في العثور على أفضل العروض والكوبونات من نون، شي إن، علي إكسبريس.
+أنت تتحدث بالعامية الخليجية الفصحى، ودود، ومفيد.
 
-    if "السلام" in query_lower or "مرحبا" in query_lower or "اهلاً" in query_lower:
-        bot_response = "وعليكم السلام ورحمة الله وبركاته يا هلا بيك يا الغالي! منور المنصة اليوم. ايش المنتج أو الجوال الذي في بالك ودك أبحث لك عن أرخص سعر وعرض له؟"
-    elif "نون" in query_lower:
-        bot_response = "🔥 **عروض وخزنة نون الحصرية المتاحة لك:**\n- **كود (NOON15):** خصم فوري بقيمة 15% على جميع المنتجات والأزياء.\n- **كود (NOON20):** خصم 20% على الطلبات الأولى للمستخدمين الجدد.\n\nهل تبحث عن منتج محدد في نون لأجلب لك سعره فوراً؟"
-    elif "شي إن" in query_lower or "shein" in query_lower:
-        bot_response = "👗 **عروض وتخفيضات شي إن الكبرى:**\n- **كود (SHEIN30):** خصم 30% على الفساتين والأزياء الصيفية الجديدة.\n- **كود (N73QS):** خصم 30% للمستخدمين الجدد على أول طلب.\n\nهل تريدني أن أبحث لك عن قطعة معينة أو ملابس بسعر مذهل؟"
-    elif "علي" in query_lower or "aliexpress" in query_lower:
-        bot_response = "🎯 **عروض علي إكسبريس (AliExpress):**\n- **كود (ALI50):** خصم يصل إلى 50% على الأجهزة الإلكترونية وإكسسوارات الهواتف.\n\nأرسل لي اسم الجوال أو المنتج الذي تبحث عنه وسأبحث لك عن أفضل صفقة! 🚀"
-    elif "سعر" in query_lower or "جوال" in query_lower or "هاتف" in query_lower or "بكم" in query_lower:
-        bot_response = "علا عينِي وراسي يا أبا رائد! 📱 يمديك ترسل لي اسم الجوال أو المنتج أو السعر الذي في بالك، وأنا أبحث لك في أقوى المتاجر وأعطيك العرض والكود حقه على طول بدون تعب!"
+سياق المحادثة الأخيرة:
+{context}
+
+تصحيحات سابقة يجب مراعاتها:
+{corrections_text}
+
+المعلومات الإضافية عن العروض والكوبونات المتوفرة حالياً:
+{coupons_text}
+
+المستخدم يقول الآن: "{user_input}"
+
+قدِّم رداً شاملاً، مع ذكر العروض إن أمكن، وإذا كان السؤال خارج التسوق، استجب بلطف واقترح كيف يمكنك مساعدته في التسوق أيضاً.
+"""
+    try:
+        if model:
+            response = model.generate_content(prompt)
+            reply = response.text.strip()
+        else:
+            reply = fallback_reply(user_input)
+    except Exception as e:
+        console.print(f"[red]خطأ في Gemini: {e}[/red]")
+        reply = fallback_reply(user_input)
+    
+    return reply
+
+def fallback_reply(user_input):
+    """محرك احتياطي يعتمد على الكلمات المفتاحية"""
+    lower = user_input.lower()
+    if any(w in lower for w in ["صباح", "مساء", "السلام", "اهلاً", "مرحباً"]):
+        return "وعليكم السلام ورحمة الله وبركاته! أهلاً بك يا غالي في منصة Saeed MarketAds. كيف يمكنني مساعدتك اليوم في عالم التسوق والعروض؟"
+    elif any(w in lower for w in ["من انت", "مين أنت"]):
+        return "أنا Saeed LogiC، مساعد التسوق الذكي الخاص بك تحت راية Saeed MarketAds، تم برمجتي لأكون دليلك الأفضل لعروض الصفقات والكوبونات."
+    elif any(w in lower for w in ["كيف حالك"]):
+        return "أنا بأفضل حال وجاهز بكفاءة تامة لخدمتك وبحث أفضل العروض من AliExpress، Noon، و SHEIN!"
     else:
-        # رد استباقي ذكي يحاوره بأسلوب تجاري احترافي
-        bot_response = f"يا هلا بطلبك ('{user_query}'). بصفتي مساعدك الذكي، أنا جاهز أبحث لك عن أفضل الصفقات والكوبونات وتوفير أموالك. هل تحب أربط لك هذا الطلب مع عروض نون، شي إن، أو علي إكسبريس؟"
+        return f"يا هلا بطلبك ('{user_input}'). بصفتي مساعدك الذكي، أنا جاهز أبحث لك عن أفضل الصفقات والكوبونات وتوفير أموالك. هل تحب أربط لك هذا الطلب مع عروض نون، شي إن، أو آلي إكسبريس؟"
 
-    # إضافة رد الروبوت للسجل وعرضه
-    st.session_state.messages.append({"role": "assistant", "content": bot_response})
-    with st.chat_message("assistant", avatar="🤖"):
-        st.markdown(bot_response)
+# ============================
+# 4. آلية التصحيح والتعلم
+# ============================
+def correct_response(user_input, bot_response, user_feedback):
+    if "خطأ:" in user_feedback or "تصحيح:" in user_feedback:
+        correction = user_feedback.split(":", 1)[1].strip()
+        corrections[user_input] = correction
+        save_corrections(corrections)
+        console.print("[green]✔️ تم حفظ التصحيح، سأتعلم منه في المرات القادمة![/green]")
+        return correction
+    return None
 
-# تذليل وتذييل الواجهة بحالة النظام وتاريخ التحديث
-st.markdown("---")
-col_status, col_time = st.columns(2)
-with col_status:
-    st.markdown("✅ **متصل وجاهز للعمل بكفاءة تامة**")
-with col_time:
-    current_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    st.markdown(f"📅 **آخر تحديث: {current_time_str}**")
+# ============================
+# 5. حلقة المحادثة الرئيسية
+# ============================
+def main_loop():
+    console.print(Panel.fit("[bold cyan]🤖 Saeed LogiC Pro - مساعد التسوق الذكي (بلا حدود)[/bold cyan]",
+                            border_style="cyan"))
+    console.print("[yellow]📢 اكتب 'خروج' لإنهاء الجلسة، أو 'تصحيح: ...' لإصلاح رد سابق.[/yellow]")
+    console.print("[magenta]💡 يمكنك سؤالي عن أي شيء، وسأبحث لك عن أفضل العروض![/magenta]\n")
+
+    while True:
+        user_input = input(Fore.GREEN + "👤 أنت: " + Style.RESET_ALL)
+        if user_input.lower() in ["خروج", "quit", "exit"]:
+            console.print("[red]مع السلامة، نتمنى لك يوماً سعيداً![/red]")
+            break
+
+        bot_reply = generate_intelligent_response(user_input)
+        console.print(Panel(Markdown(bot_reply), title="[bold blue]🤖 Saeed LogiC[/bold blue]", border_style="blue"))
+        generate_audio(bot_reply)
+
+        memory["history"].append({"user": user_input, "bot": bot_reply, "time": str(datetime.now())})
+        save_memory(memory)
+
+        feedback = input(Fore.YELLOW + "📝 هل هذا الرد صحيح؟ (اضغط Enter للموافقة، أو اكتب 'تصحيح: ...' لتعديله): " + Style.RESET_ALL)
+        if feedback.strip():
+            correction = correct_response(user_input, bot_reply, feedback)
+            if correction:
+                console.print(f"[cyan]تم التحديث، سأستخدم التصحيح: {correction}[/cyan]")
+                generate_audio(correction)
+
+if __name__ == "__main__":
+    main_loop()
