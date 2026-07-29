@@ -1,94 +1,83 @@
 import streamlit as st
-import os
-from datetime import datetime
+from google import genai
+from google.genai import types
 
-# يجب أن يكون هذا الأمر أولاً!
+# Page Configuration
 st.set_page_config(
-    page_title="Saeed LogiC Pro",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="Gemini 3.1 Flash Chat",
+    page_icon="✨",
+    layout="centered"
 )
 
-# استيراد الدوال من app_utils
-from app_utils import (
-    get_ai_reply, generate_audio, memory, corrections,
-    knowledge, save_conversation
-)
+# App Header
+st.title("✨ Gemini 3.1 Flash Chatbot")
+st.markdown("Build interactive AI web apps quickly using **Streamlit** and Google's **Gemini 3.1 Flash** model.")
 
-# ===================================================================
-# تنسيقات CSS للواجهة الداكنة
-# ===================================================================
-st.markdown("""
-<style>
-    .stApp { background-color: #0e1117; }
-    .stSidebar { background-color: #161b22; border-right: 1px solid #30363d; }
-    .stButton button { width: 100%; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #a855f7); color: white; font-weight: bold; border: none; transition: 0.3s; }
-    .stButton button:hover { transform: scale(1.02); opacity: 0.9; }
-</style>
-""", unsafe_allow_html=True)
-
-# ===================================================================
-# الشريط الجانبي
-# ===================================================================
+# Sidebar for Configuration
 with st.sidebar:
-    st.image("https://via.placeholder.com/150/0e1117/6366f1?text=Saeed", width=150)
-    st.markdown("## 🧠 الذاكرة والتعلم")
-    st.write(f"**عدد المحادثات:** {len(memory['history']) if 'history' in memory else 0}")
-    st.write(f"**عدد التصحيحات:** {len(corrections)}")
+    st.header("⚙️ Settings")
+    api_key = st.text_input("Enter your Google Gemini API Key:", type="password")
+    
+    temperature = st.slider("Temperature", min_value=0.0, max_value=2.0, value=0.7, step=0.1)
+    max_tokens = st.slider("Max Output Tokens", min_value=256, max_value=8192, value=2048, step=256)
+    
     st.markdown("---")
-    st.subheader("📦 قاعدة المعرفة")
-    st.json(knowledge)
-    st.markdown("---")
-    if st.button("🗑️ مسح المحادثة"):
+    st.markdown("### About")
+    st.markdown("This app integrates Streamlit with the fast and efficient `gemini-3.1-flash` model for high-performance text generation.")
+
+# Main Chat Interface
+if not api_key:
+    st.warning("⚠️ Please enter your Gemini API Key in the sidebar to start chatting.")
+else:
+    # Initialize the GenAI client
+    client = genai.Client(api_key=api_key)
+    
+    # Initialize chat history in session state
+    if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.rerun()
 
-# ===================================================================
-# منطقة المحادثة
-# ===================================================================
-st.title("🤖 Saeed LogiC Pro")
-st.caption("مساعد التسوق الذكي – محادثة حرة بلا حدود")
+    # Display chat history
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "assistant", "content": "مرحباً بك في Saeed LogiC Pro! 🛍️ اسألني عن أي منتج أو عرض، وسأبحث لك عن أفضل صفقة."}
-    ]
+    # Accept user input
+    if prompt := st.chat_input("Ask Gemini 3.1 Flash anything..."):
+        # Add user message to history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
-        if "audio" in msg and msg["audio"] and os.path.exists(msg["audio"]):
-            st.audio(msg["audio"], format="audio/mp3")
-
-# ===================================================================
-# مدخل المستخدم
-# ===================================================================
-if prompt := st.chat_input("اكتب ما شئت... اسأل أو اطلب عرضك"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
-        reply = get_ai_reply(prompt)
-        st.markdown(reply)
-
-        audio_file = generate_audio(reply)
-        if audio_file and os.path.exists(audio_file):
-            st.audio(audio_file, format="audio/mp3")
-
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": reply,
-            "audio": audio_file if audio_file else None
-        })
-
-        save_conversation(prompt, reply)
-
-# ===================================================================
-# تذييل الصفحة
-# ===================================================================
-st.markdown("---")
-col1, col2 = st.columns(2)
-col1.markdown("✅ **الحالة:** متصل وجاهز")
-col2.markdown(f"📅 **آخر تحديث:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        # Generate response using Gemini 3.1 Flash
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            message_placeholder.markdown("Thinking...")
+            
+            try:
+                # Prepare contents from history
+                chat_contents = [
+                    types.Content(
+                        role=m["role"],
+                        parts=[types.Part.from_text(text=m["content"])]
+                    ) for m in st.session_state.messages
+                ]
+                
+                response = client.models.generate_content(
+                    model="gemini-3.1-flash",
+                    contents=chat_contents,
+                    config=types.GenerateContentConfig(
+                        temperature=temperature,
+                        max_output_tokens=max_tokens
+                    )
+                )
+                
+                assistant_response = response.text
+                message_placeholder.markdown(assistant_response)
+                
+                # Add assistant response to history
+                st.session_state.messages.append({"role": "model", "content": assistant_response})
+                
+            except Exception as e:
+                error_msg = f"An error occurred: {e}"
+                message_placeholder.error(error_msg)
+```eof
