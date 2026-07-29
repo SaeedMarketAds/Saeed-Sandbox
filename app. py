@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# استيراد الدوال من app_utils (تأكد أن app_utils لا يستورد streamlit)
+# استيراد الدوال من app_utils
 from app_utils import (
     get_ai_reply, generate_audio, memory, corrections,
     knowledge, save_conversation
@@ -34,7 +34,7 @@ st.markdown("""
 with st.sidebar:
     st.image("https://via.placeholder.com/150/0e1117/6366f1?text=Saeed", width=150)
     st.markdown("## 🧠 الذاكرة والتعلم")
-    st.write(f"**عدد المحادثات:** {len(memory['history'])}")
+    st.write(f"**عدد المحادثات:** {len(memory['history']) if 'history' in memory else 0}")
     st.write(f"**عدد التصحيحات:** {len(corrections)}")
     st.markdown("---")
     st.subheader("📦 قاعدة المعرفة")
