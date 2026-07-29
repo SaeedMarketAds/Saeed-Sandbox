@@ -1,97 +1,152 @@
 import io
 import sys
+import os
 import streamlit as st
 from google import genai
 from google.genai import types
 
-# --- ضبط ترميز النظام ليدعم العربية بدون مشاكل ASCII ---
+# ===================================================
+# 1. ضبط ترميز النظام ليدعم العربية بدون مشاكل ASCII
+# ===================================================
 if hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-# ---------------------------------------------------
 
-# Page Configuration
+# ===================================================
+# 2. إعدادات الصفحة والهوية البصرية
+# ===================================================
 st.set_page_config(
-    page_title="Gemini 3.1 Flash Chat",
-    page_icon="✨",
+    page_title="Saeed LogiC Pro",
+    page_icon="🛍️",
     layout="centered"
 )
 
-# Page Configuration
-st.set_page_config(
-    page_title="Gemini 3.1 Flash Chat",
-    page_icon="✨",
-    layout="centered"
-)
+# ===================================================
+# 3. جلب المفاتيح من st.secrets بأمان
+# ===================================================
+def get_secret_val(key_name, default=""):
+    try:
+        return st.secrets.get(key_name, default)
+    except Exception:
+        return os.getenv(key_name, default)
 
-# App Header
-st.title("✨ Gemini 3.1 Flash Chatbot")
-st.markdown("Build interactive AI web apps quickly using **Streamlit** and Google's **Gemini 3.1 Flash** model.")
+GEMINI_MAIN_KEY = get_secret_val("GEMINI_MAIN_KEY")
+GEMINI_BACKUP_KEY = get_secret_val("GEMINI_BACKUP_KEY")
+ELEVENLABS_API_KEY = get_secret_val("ELEVENLABS_API_KEY")
+TELEGRAM_BOT_TOKEN_SAEED_MARKETADS = get_secret_val("TELEGRAM_BOT_TOKEN_SAEED_MARKETADS")
+TELEGRAM_BOT_TOKEN_SAEED_PLUS = get_secret_val("TELEGRAM_BOT_TOKEN_SAEED_PLUS")
+TELEGRAM_CHANNEL_ID = get_secret_val("TELEGRAM_CHANNEL_ID", "SeenMarket2026")
 
-# Sidebar for Configuration
-with st.sidebar:
-    st.header("⚙️ Settings")
-    api_key = st.text_input("Enter your Google Gemini API Key:", type="password")
+# ===================================================
+# 4. دالة معالجة الردود مع الحماية والتحويل الاحتياطي
+# ===================================================
+def get_smart_response(messages_history, temperature=0.7, max_tokens=2048):
+    """
+    تحاول هذه الدالة التوصيل بالمفتاح الرئيسي GEMINI_MAIN_KEY،
+    وفي حال فشله تنتقل تلقائياً للمفتاح الاحتياطي GEMINI_BACKUP_KEY.
+    """
+    keys_to_try = [
+        ("الرئيسي", GEMINI_MAIN_KEY),
+        ("الاحتياطي", GEMINI_BACKUP_KEY)
+    ]
     
-    temperature = st.slider("Temperature", min_value=0.0, max_value=2.0, value=0.7, step=0.1)
-    max_tokens = st.slider("Max Output Tokens", min_value=256, max_value=8192, value=2048, step=256)
+    # تصفية المفاتيح الفارغة
+    available_keys = [(name, k) for name, k in keys_to_try if k and k.strip()]
+    
+    if not available_keys:
+        raise ValueError("لم يتم العثور على أي مفتاح Gemini API في إعدادات Secrets!")
+
+    last_exception = None
+
+    for key_name, api_key in available_keys:
+        try:
+            # تجهيز عميل Gemini
+            client = genai.Client(api_key=api_key)
+            
+            # تحويل تاريخ المحادثة إلى الصيغة الخاصة بـ Google GenAI
+            chat_contents = [
+                types.Content(
+                    role="user" if m["role"] == "user" else "model",
+                    parts=[types.Part.from_text(text=m["content"])]
+                ) for m in messages_history
+            ]
+            
+            # طلب توليد النص
+            response = client.models.generate_content(
+                model="gemini-1.5-flash",
+                contents=chat_contents,
+                config=types.GenerateContentConfig(
+                    temperature=temperature,
+                    max_output_tokens=max_tokens,
+                    system_instruction="أنت مساعد التسوق الذكي الخاص بـ Saeed MarketAds. تقدم الإجابات بدقة، واحترافية، وتساعد المستخدمين في العثور على أفضل العروض والمنتجات."
+                )
+            )
+            
+            if response and response.text:
+                return response.text
+                
+        except Exception as e:
+            last_exception = e
+            # في حال حدوث خطأ، تنتقل الحلقة تلقائياً للمفتاح الاحتياطي التالي
+            continue
+
+    raise Exception(f"فشلت الاتصالات بجميع المفاتيح: {last_exception}")
+
+# ===================================================
+# 5. القائمة الجانبية (Sidebar)
+# ===================================================
+with st.sidebar:
+    st.header("⚙️ إعدادات المحرك")
+    
+    # التحكم بخصائص التوليد
+    temp_val = st.slider("مستوى الإبداع (Temperature)", min_value=0.0, max_value=2.0, value=0.7, step=0.1)
+    max_tok_val = st.slider("الحد الأقصى للكلمات (Max Tokens)", min_value=256, max_value=8192, value=2048, step=256)
     
     st.markdown("---")
-    st.markdown("### About")
-    st.markdown("This app integrates Streamlit with the fast and efficient `gemini-3.1-flash` model for high-performance text generation.")
+    st.markdown("### 📡 حالة الاتصال")
+    st.write(f"**المفتاح الرئيسي:** {'✅ مُفعل' if GEMINI_MAIN_KEY else '❌ غير متاح'}")
+    st.write(f"**المفتاح الاحتياطي:** {'✅ مُفعل' if GEMINI_BACKUP_KEY else '❌ غير متاح'}")
+    st.write(f"**خدمة الصوت:** {'✅ ElevenLabs' if ELEVENLABS_API_KEY else '⚪ وضع افتراضي'}")
+    st.write(f"**القناة:** `@{TELEGRAM_CHANNEL_ID}`")
 
-# Main Chat Interface
-if not api_key:
-    st.warning("⚠️ Please enter your Gemini API Key in the sidebar to start chatting.")
-else:
-    # Initialize the GenAI client
-    client = genai.Client(api_key=api_key)
+# ===================================================
+# 6. واجهة المستخدم الرئيسية (Shopping Assistant UI)
+# ===================================================
+st.title("🛍️ Saeed LogiC Pro")
+st.caption("مساعد التسوق الذكي - Saeed MarketAds")
+st.markdown("---")
+st.markdown("💡 **مرحباً بك يا سعيد!** اكتب استفسارك عن المنتجات أو العروض وسأقوم بمساعدتك فوراً.")
+
+# إدارة سجل المحادثة في st.session_state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# عرض المحادثات السابقة
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# استقبال مدخلات المستخدم
+if user_input := st.chat_input("اكتب سؤالك هنا (مثلاً: عروض نون اليوم)..."):
     
-    # Initialize chat history in session state
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # إضافة رسالة المستخدم للسجل وعرضها
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
 
-    # Display chat history
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # Accept user input
-    if prompt := st.chat_input("Ask Gemini 3.1 Flash anything..."):
-        # Add user message to history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        # Generate response using Gemini 3.1 Flash
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            message_placeholder.markdown("Thinking...")
-            
+    # معالجة وتوليد الرد
+    with st.chat_message("assistant"):
+        with st.spinner("جاري البحث عن أفضل العروض وتجهيز الرد..."):
             try:
-                # Prepare contents from history
-                chat_contents = [
-                    types.Content(
-                        role=m["role"],
-                        parts=[types.Part.from_text(text=m["content"])]
-                    ) for m in st.session_state.messages
-                ]
-                
-                response = client.models.generate_content(
-                    model="gemini-3.1-flash",
-                    contents=chat_contents,
-                    config=types.GenerateContentConfig(
-                        temperature=temperature,
-                        max_output_tokens=max_tokens
-                    )
+                bot_reply = get_smart_response(
+                    st.session_state.messages,
+                    temperature=temp_val,
+                    max_tokens=max_tok_val
                 )
                 
-                assistant_response = response.text
-                message_placeholder.markdown(assistant_response)
+                st.markdown(bot_reply)
                 
-                # Add assistant response to history
-                st.session_state.messages.append({"role": "model", "content": assistant_response})
+                # حفظ الرد في سجل المحادثة
+                st.session_state.messages.append({"role": "assistant", "content": bot_reply})
                 
-            except Exception as e:
-                error_msg = f"An error occurred: {e}"
-                message_placeholder.error(error_msg)
-```eof
+            except Exception as err:
+                st.error(f"عذراً، حدث خطأ أثناء الاتصال بالخادم: {err}")
