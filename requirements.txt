@@ -4,7 +4,6 @@ edge-tts>=6.1.9
 google-genai
 google-generativeai>=0.8.3
 moviepy
-pillow==10.4.0
 python-bidi==0.4.2
 requests==2.31.0
 rich==13.7.1
