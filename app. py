@@ -4,6 +4,7 @@ import os
 import streamlit as st
 from google import genai
 from google.genai import types
+from PIL import Image
 
 # ===================================================
 # 1. ضبط ترميز النظام ليدعم العربية بدون مشاكل ASCII
@@ -15,7 +16,7 @@ if hasattr(sys.stdout, "buffer"):
 # 2. إعدادات الصفحة والهوية البصرية
 # ===================================================
 st.set_page_config(
-    page_title="Saeed LogiC Pro",
+    page_title="Saeed LogiC Pro & AI Studio",
     page_icon="🛍️",
     layout="centered"
 )
@@ -37,19 +38,13 @@ TELEGRAM_BOT_TOKEN_SAEED_PLUS = get_secret_val("TELEGRAM_BOT_TOKEN_SAEED_PLUS")
 TELEGRAM_CHANNEL_ID = get_secret_val("TELEGRAM_CHANNEL_ID", "SeenMarket2026")
 
 # ===================================================
-# 4. دالة معالجة الردود مع الحماية والتحويل الاحتياطي
+# 4. دالة معالجة الردود النصية مع المفاتيح الاحتياطية
 # ===================================================
 def get_smart_response(messages_history, temperature=0.7, max_tokens=2048):
-    """
-    تحاول هذه الدالة التوصيل بالمفتاح الرئيسي GEMINI_MAIN_KEY،
-    وفي حال فشله تنتقل تلقائياً للمفتاح الاحتياطي GEMINI_BACKUP_KEY.
-    """
     keys_to_try = [
         ("الرئيسي", GEMINI_MAIN_KEY),
         ("الاحتياطي", GEMINI_BACKUP_KEY)
     ]
-    
-    # تصفية المفاتيح الفارغة
     available_keys = [(name, k) for name, k in keys_to_try if k and k.strip()]
     
     if not available_keys:
@@ -59,10 +54,7 @@ def get_smart_response(messages_history, temperature=0.7, max_tokens=2048):
 
     for key_name, api_key in available_keys:
         try:
-            # تجهيز عميل Gemini
             client = genai.Client(api_key=api_key)
-            
-            # تحويل تاريخ المحادثة إلى الصيغة الخاصة بـ Google GenAI
             chat_contents = [
                 types.Content(
                     role="user" if m["role"] == "user" else "model",
@@ -70,7 +62,6 @@ def get_smart_response(messages_history, temperature=0.7, max_tokens=2048):
                 ) for m in messages_history
             ]
             
-            # طلب توليد النص
             response = client.models.generate_content(
                 model="gemini-1.5-flash",
                 contents=chat_contents,
@@ -86,18 +77,19 @@ def get_smart_response(messages_history, temperature=0.7, max_tokens=2048):
                 
         except Exception as e:
             last_exception = e
-            # في حال حدوث خطأ، تنتقل الحلقة تلقائياً للمفتاح الاحتياطي التالي
             continue
 
     raise Exception(f"فشلت الاتصالات بجميع المفاتيح: {last_exception}")
 
 # ===================================================
-# 5. القائمة الجانبية (Sidebar)
+# 5. القائمة الجانبية (Sidebar) للتنقل والإعدادات
 # ===================================================
 with st.sidebar:
-    st.header("⚙️ إعدادات المحرك")
+    st.header("🧭 التنقل في المنصة")
+    app_mode = st.radio("اختر القسم:", ["🛍️ مساعد التسوق الذكي", "🎨 استوديو توليد الصور"])
     
-    # التحكم بخصائص التوليد
+    st.markdown("---")
+    st.header("⚙️ إعدادات المحرك")
     temp_val = st.slider("مستوى الإبداع (Temperature)", min_value=0.0, max_value=2.0, value=0.7, step=0.1)
     max_tok_val = st.slider("الحد الأقصى للكلمات (Max Tokens)", min_value=256, max_value=8192, value=2048, step=256)
     
@@ -105,48 +97,99 @@ with st.sidebar:
     st.markdown("### 📡 حالة الاتصال")
     st.write(f"**المفتاح الرئيسي:** {'✅ مُفعل' if GEMINI_MAIN_KEY else '❌ غير متاح'}")
     st.write(f"**المفتاح الاحتياطي:** {'✅ مُفعل' if GEMINI_BACKUP_KEY else '❌ غير متاح'}")
-    st.write(f"**خدمة الصوت:** {'✅ ElevenLabs' if ELEVENLABS_API_KEY else '⚪ وضع افتراضي'}")
     st.write(f"**القناة:** `@{TELEGRAM_CHANNEL_ID}`")
 
 # ===================================================
-# 6. واجهة المستخدم الرئيسية (Shopping Assistant UI)
+# 6. واجهة القسم الأول: مساعد التسوق الذكي
 # ===================================================
-st.title("🛍️ Saeed LogiC Pro")
-st.caption("مساعد التسوق الذكي - Saeed MarketAds")
-st.markdown("---")
-st.markdown("💡 **مرحباً بك يا سعيد!** اكتب استفسارك عن المنتجات أو العروض وسأقوم بمساعدتك فوراً.")
+if app_mode == "🛍️ مساعد التسوق الذكي":
+    st.title("🛍️ Saeed LogiC Pro")
+    st.caption("مساعد التسوق الذكي - Saeed MarketAds")
+    st.markdown("---")
+    st.markdown("💡 **مرحباً بك يا سعيد!** اكتب استفسارك عن المنتجات أو العروض وسأقوم بمساعدتك فوراً.")
 
-# إدارة سجل المحادثة في st.session_state
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-# عرض المحادثات السابقة
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# استقبال مدخلات المستخدم
-if user_input := st.chat_input("اكتب سؤالك هنا (مثلاً: عروض نون اليوم)..."):
-    
-    # إضافة رسالة المستخدم للسجل وعرضها
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
+    if user_input := st.chat_input("اكتب سؤالك هنا (مثلاً: عروض نون اليوم)..."):
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
 
-    # معالجة وتوليد الرد
-    with st.chat_message("assistant"):
-        with st.spinner("جاري البحث عن أفضل العروض وتجهيز الرد..."):
+        with st.chat_message("assistant"):
+            with st.spinner("جاري البحث عن أفضل العروض وتجهيز الرد..."):
+                try:
+                    bot_reply = get_smart_response(
+                        st.session_state.messages,
+                        temperature=temp_val,
+                        max_tokens=max_tok_val
+                    )
+                    st.markdown(bot_reply)
+                    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
+                except Exception as err:
+                    st.error(f"عذراً، حدث خطأ أثناء الاتصال بالخادم: {err}")
+
+# ===================================================
+# 7. واجهة القسم الثاني: استوديو توليد الصور التفاعلي
+# ===================================================
+elif app_mode == "🎨 استوديو توليد الصور":
+    st.title("🎨 استوديو سعيد للذكاء الاصطناعي - SaeedMarketAds")
+    st.write("صمم صورك وإعلاناتك المبتكرة بالذكاء الاصطناعي وشاركها مع أصدقائك لجذب الزوار للمنصة!")
+    st.markdown("---")
+
+    style = st.selectbox(
+        "اختر الستايل المطلوب للصورة:",
+        [
+            "صورة من الثمانينيات (Retro 80s Style)",
+            "إعلان منتج احترافي (Product Ad)",
+            "شخصية كرتونية ثلاثية الأبعاد (3D Avatar)",
+            "فن نيون حديث (Neon Cyberpunk)"
+        ]
+    )
+
+    user_prompt = st.text_input("صف ما تريد رؤيته في الصورة:", "شخص يرتدي زي كرتوني في مدينة ألعاب")
+
+    if st.button("🚀 توليد الصورة الآن"):
+        with st.spinner("جاري تصميم صورتك بالذكاء الاصطناعي..."):
             try:
-                bot_reply = get_smart_response(
-                    st.session_state.messages,
-                    temperature=temp_val,
-                    max_tokens=max_tok_val
+                full_prompt = f"{user_prompt}, style: {style}, high quality, vibrant colors"
+                
+                # استخدام المفتاح الرئيسي لتوليد الصور
+                active_key = GEMINI_MAIN_KEY if GEMINI_MAIN_KEY else GEMINI_BACKUP_KEY
+                client = genai.Client(api_key=active_key)
+                
+                result = client.models.generate_images(
+                    model='imagen-3.0-generate-002',
+                    prompt=full_prompt,
+                    config=types.GenerateImagesConfig(
+                        number_of_images=1,
+                        output_mime_type="image/jpeg",
+                        aspect_ratio="1:1",
+                    )
                 )
                 
-                st.markdown(bot_reply)
-                
-                # حفظ الرد في سجل المحادثة
-                st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-                
-            except Exception as err:
-                st.error(f"عذراً، حدث خطأ أثناء الاتصال بالخادم: {err}")
+                for generated_image in result.generated_images:
+                    image = Image.open(io.BytesIO(generated_image.image.image_bytes))
+                    st.image(image, caption="تم التصميم بواسطة SaeedMarketAds 🛍️", use_container_width=True)
+                    
+                    # تحويل الصورة إلى بايتس للتحميل
+                    buf = io.BytesIO()
+                    image.save(buf, format="JPEG")
+                    byte_im = buf.getvalue()
+
+                    st.download_button(
+                        label="📥 تحميل الصورة ومشاركتها",
+                        data=byte_im,
+                        file_name="saeed_ai_design.jpg",
+                        mime="image/jpeg"
+                    )
+                    
+                st.balloons()
+                st.success("تم التصميم بنجاح! لا تنسَ مشاركتها مع أصدقائك ودعوتهم لاستخدام SaeedMarketAds.")
+
+            except Exception as e:
+                st.error(f"حدث خطأ أثناء التوليد: {e}")
