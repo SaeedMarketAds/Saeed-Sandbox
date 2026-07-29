@@ -47,7 +47,7 @@ def get_gemini_smart_response(user_input):
 
     try:
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",  # تم التحديث إلى النموذج المدعوم والنشط
             contents=user_input,
             config={
                 "system_instruction": system_instruction,
