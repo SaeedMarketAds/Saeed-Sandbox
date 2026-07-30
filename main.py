@@ -37,7 +37,7 @@ if user_input := st.chat_input("اكتب سؤالك هنا (مثلاً: عروض
     with st.chat_message("user"):
         st.markdown(user_input)
 
-    # توليد رد الذكاء الاصطناعي عبر موديل gemini-3.1-flash
+    # توليد رد الذكاء الاصطناعي عبر موديل model="gemini-3.1-flash",
     with st.chat_message("assistant"):
         with st.spinner("جاري البحث عن أفضل العروض وتجهيز الرد..."):
             bot_reply = get_gemini_smart_response(user_input)
