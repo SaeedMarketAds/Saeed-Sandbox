@@ -81,7 +81,7 @@ def get_gemini_smart_response(user_input):
         )
 
         response = client.models.generate_content(
-            model="gemini-3.1-flash",
+             model="gemini-2.5-flash",
             contents=user_input,
             config=config,
         )
